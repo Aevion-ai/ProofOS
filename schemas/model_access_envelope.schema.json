@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aevion.ai/schemas/model_access_envelope.schema.json",
+  "title": "ModelAccessEnvelope",
+  "description": "Access envelope around a frontier model capability. Separates model capability from permission to use capability. Validated by Anthropic Fable 5 / Mythos 5 launch (June 9, 2026).",
+  "type": "object",
+  "required": ["model_id", "capability_class", "access_tier", "safeguard_mode", "retention_policy_days", "receipt_required", "human_gate_required", "policy_version"],
+  "properties": {
+    "model_id": {
+      "type": "string",
+      "description": "Identifier for the underlying model"
+    },
+    "capability_class": {
+      "type": "string",
+      "enum": ["GENERAL", "MYTHOS_CLASS", "DUAL_USE_CRITICAL"],
+      "description": "Capability classification of the model"
+    },
+    "access_tier": {
+      "type": "string",
+      "enum": ["PUBLIC", "BUSINESS", "TRUSTED_ACCESS", "HUMAN_ONLY"],
+      "description": "Who can access this capability envelope"
+    },
+    "safeguard_mode": {
+      "type": "string",
+      "enum": ["FULL", "PARTIAL", "LIFTED_BY_APPROVAL"],
+      "description": "Safeguard envelope applied to model access"
+    },
+    "fallback_model": {
+      "type": "string",
+      "description": "Safe degraded model when capability is blocked"
+    },
+    "retention_policy_days": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Minimum days to retain audit evidence"
+    },
+    "receipt_required": {
+      "type": "boolean",
+      "description": "Whether cryptographic receipts are required for every inference"
+    },
+    "human_gate_required": {
+      "type": "boolean",
+      "description": "Whether human approval is required before action execution"
+    },
+    "policy_version": {
+      "type": "string",
+      "description": "Version of this access envelope policy"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "access_tier": { "const": "PUBLIC" } }
+      },
+      "then": {
+        "required": ["fallback_model"],
+        "properties": { "safeguard_mode": { "const": "FULL" } }
+      }
+    },
+    {
+      "if": {
+        "properties": { "access_tier": { "const": "HUMAN_ONLY" } }
+      },
+      "then": {
+        "properties": {
+          "human_gate_required": { "const": true },
+          "receipt_required": { "const": true }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "capability_class": { "const": "DUAL_USE_CRITICAL" } }
+      },
+      "then": {
+        "properties": {
+          "access_tier": { "enum": ["TRUSTED_ACCESS", "HUMAN_ONLY"] },
+          "human_gate_required": { "const": true },
+          "retention_policy_days": { "minimum": 30 }
+        }
+      }
+    }
+  ]
+}

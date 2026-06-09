@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aevion.local/schemas/tinker_checkpoint_receipt.schema.json",
+  "title": "Aevion Tinker Checkpoint Receipt",
+  "description": "Schema for a Tinker training checkpoint receipt. Extends TinkerTrainingReceipt for checkpoint-specific fields. Every checkpoint is a Human Gate event — model weight mutations must be attested.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "checkpoint_uri",
+    "model_name",
+    "operation",
+    "qkl_from_state",
+    "qkl_to_state",
+    "human_gate_satisfied",
+    "emitted_at"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^[A-Fa-f0-9]{64}$",
+      "description": "SHA-256 of canonical receipt body (excluding receipt_id itself)"
+    },
+    "checkpoint_uri": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Tinker checkpoint URI (tinker:// scheme) or local path"
+    },
+    "model_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "HuggingFace model ID"
+    },
+    "model_sha256": {
+      "type": "string",
+      "pattern": "^[A-Fa-f0-9]{64}$",
+      "description": "SHA-256 of base model weights at checkpoint time"
+    },
+    "operation": {
+      "type": "string",
+      "const": "save_checkpoint",
+      "description": "Always 'save_checkpoint' for checkpoint receipts"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Tinker session identifier"
+    },
+    "loss_value": {
+      "type": ["number", "null"],
+      "description": "Loss at checkpoint time (null if checkpoint created outside training step)"
+    },
+    "qkl_from_state": {
+      "type": "string",
+      "enum": [
+        "RAW_SIGNAL",
+        "HASHED_SIGNAL",
+        "EVIDENCE_GAP",
+        "CANDIDATE_ONLY",
+        "EMPIRICALLY_OBSERVED",
+        "THEOREM_TARGET",
+        "PROVED",
+        "HUMAN_GATE_REQUIRED",
+        "ACCEPTED_INTO_CORPUS",
+        "BLOCKED"
+      ],
+      "description": "QKL state before checkpoint"
+    },
+    "qkl_to_state": {
+      "type": "string",
+      "enum": [
+        "RAW_SIGNAL",
+        "HASHED_SIGNAL",
+        "EVIDENCE_GAP",
+        "CANDIDATE_ONLY",
+        "EMPIRICALLY_OBSERVED",
+        "THEOREM_TARGET",
+        "PROVED",
+        "HUMAN_GATE_REQUIRED",
+        "ACCEPTED_INTO_CORPUS",
+        "BLOCKED"
+      ],
+      "description": "QKL state after checkpoint (almost always HUMAN_GATE_REQUIRED)"
+    },
+    "human_gate_satisfied": {
+      "type": "boolean",
+      "description": "Was the human_gate_token present and valid when checkpoint was created?"
+    },
+    "human_gate_token_hash": {
+      "type": "string",
+      "pattern": "^[A-Fa-f0-9]{64}$",
+      "description": "SHA-256 of gate token (NEVER store raw token). Required if human_gate_satisfied=true."
+    },
+    "checkpoint_metadata": {
+      "type": "object",
+      "description": "Checkpoint-specific metadata",
+      "properties": {
+        "step": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Training step number at checkpoint"
+        },
+        "epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Training epoch at checkpoint"
+        },
+        "lora_rank": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "LoRA adapter rank"
+        },
+        "adapter_sha256": {
+          "type": "string",
+          "pattern": "^[A-Fa-f0-9]{64}$",
+          "description": "SHA-256 of LoRA adapter weights"
+        },
+        "optimizer_state_sha256": {
+          "type": "string",
+          "pattern": "^[A-Fa-f0-9]{64}$",
+          "description": "SHA-256 of optimizer state"
+        },
+        "dataset_sha256": {
+          "type": "string",
+          "pattern": "^[A-Fa-f0-9]{64}$",
+          "description": "SHA-256 of training dataset at checkpoint time"
+        },
+        "ttl_days": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 365,
+          "description": "Checkpoint TTL in days"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "User-defined tags for checkpoint identification"
+        }
+      }
+    },
+    "council_metrics": {
+      "type": "object",
+      "description": "Counsel Colony metrics at checkpoint time (only for counsel training)",
+      "properties": {
+        "council_agreement": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Fraction of non-Byzantine agents agreeing with majority"
+        },
+        "byzantine_veto_active": {
+          "type": "boolean",
+          "description": "Whether Byzantine veto was active in this batch"
+        },
+        "mean_tts": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Mean True-Thinking Score across all agents"
+        },
+        "decorative_ratio": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Fraction of steps classified as decorative"
+        }
+      }
+    },
+    "emitted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC ISO 8601 timestamp of receipt creation"
+    },
+    "canonical_hash": {
+      "type": "string",
+      "pattern": "^[A-Fa-f0-9]{64}$",
+      "description": "SHA-256 of canonical JSON representation (for ProofDB dedup)"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Arbitrary additional metadata"
+    }
+  }
+}
