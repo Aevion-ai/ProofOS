@@ -173,39 +173,18 @@
 
 <section id="products">
   <div class="container">
-    <h2>ProofOS Stack</h2>
-    <p class="section-sub">104 open obligations are a <strong>feature</strong>, not a liability — each one is logged, hash-chained, and queued for repair. An auditor reads the gap list, not a confidence number.</p>
+    <h2>Platform</h2>
+    <p class="section-sub">Proof-native governance stack — from quantum hardware witnesses to Lean-verified gates.</p>
     <div class="products">
-      <div class="product">
-        <h3>Constitutional Halt Gate</h3>
-        <p>Lean 4 predicates block state transitions failing declared safety properties. haltSoundness, barrierInvariance, byzantineGovernance — proved.</p>
-        <a href="https://github.com/Aevion-ai/ProofOS/blob/main/lean/LeishmanBerger.lean">LeishmanBerger.lean →</a>
-      </div>
-      <div class="product">
-        <h3>Receipt Chain</h3>
-        <p>SHA-256 content-addressed, canonical JSON. Every gating decision emits an immutable, independently re-derivable record.</p>
-        <a href="https://github.com/Aevion-ai/ProofOS/blob/main/architecture.md">Architecture →</a>
-      </div>
-      <div class="product">
-        <h3>Agent Counsel Colony</h3>
-        <p>Byzantine red-team + SIFT decorative filter + DiF pure-function floor + Pi 5 cross-architecture attestation. 88% auto-pass on 150 stratified cases.</p>
-        <a href="https://github.com/Aevion-ai/ProofOS/blob/main/quorum.md">Quorum Constitution →</a>
-      </div>
-      <div class="product">
-        <h3>Capability Access Separation</h3>
-        <p>Model ≠ product. Access envelopes PUBLIC → BUSINESS → TRUSTED_ACCESS → HUMAN_ONLY. Lean-proven (3 theorems). Validated by Anthropic Fable/Mythos.</p>
-        <a href="https://github.com/Aevion-ai/ProofOS/blob/main/lean/CapabilityAccessSeparation.lean">CapabilityAccessSeparation.lean →</a>
-      </div>
-      <div class="product">
-        <h3>Open-Obligation Surface</h3>
-        <p>104 named, categorized, receipt-stamped obligations across 32 files. The gap list IS the deliverable — auditable, not aspirational.</p>
-        <a href="https://github.com/Aevion-ai/ProofOS">ProofOS repo →</a>
-      </div>
-      <div class="product">
-        <h3>ModelAccessEnvelope</h3>
-        <p>Runtime access control for frontier models. Capability class → tier → safeguard → fallback → receipt → human gate. 20/20 tests pass.</p>
-        <a href="https://github.com/Aevion-ai/ProofOS/blob/main/src/aevion_runtime/model_access_envelope.py">Source →</a>
-      </div>
+      <div class="product"><h3>ProofOS</h3><p>Constitutional halt gate, receipt chain, Agent Counsel Colony with Byzantine fault detection, cross-architecture Pi 5 Sheriff attestation.</p><a href="https://github.com/Aevion-ai/ProofOS">GitHub →</a></div>
+      <div class="product"><h3>ProofDB</h3><p>SHA-256 content-addressed evidence store with canonical serialization. Every artifact hash-chained and independently verifiable.</p><a href="https://github.com/Aevion-ai/ProofOS">Docs →</a></div>
+      <div class="product"><h3>XGML</h3><p>Verifiable agent execution graph format. Evidence graphs with cryptographic provenance edges.</p><a href="https://xgml.org">xgml.org →</a></div>
+      <div class="product"><h3>QKL</h3><p>Koopman-Lyapunov Lattice — 10-state formal verification lifecycle. RAW_SIGNAL → PROVED → HUMAN_GATE → ACCEPTED_INTO_CORPUS.</p><a href="https://github.com/Aevion-ai/ProofOS">Architecture →</a></div>
+      <div class="product"><h3>XAL</h3><p>Explainable Assembly Language — cryptographically verifiable AI execution format with Ed25519 signatures and constitutional halts.</p><a href="https://github.com/Aevion-ai/xal-specification">Spec →</a></div>
+      <div class="product"><h3>RubricOps</h3><p>Versioned rubric-as-policy with blocked-claims discipline. Mathematical governance layer with hash-chained receipts.</p><a href="https://github.com/Aevion-ai/ProofOS">Docs →</a></div>
+      <div class="product"><h3>CapabilityAccessSeparation</h3><p>Model ≠ product. Access envelopes PUBLIC → BUSINESS → TRUSTED_ACCESS → HUMAN_ONLY. Lean-proven. Validated by Anthropic Fable/Mythos.</p><a href="https://github.com/Aevion-ai/ProofOS/blob/main/lean/CapabilityAccessSeparation.lean">Lean source →</a></div>
+      <div class="product"><h3>Kirin Fold</h3><p>Quantum hardware witness validation. Bell state verification, QGOV predict tiles, hardware-vs-simulator TVD computation.</p><a href="https://github.com/Aevion-ai/ProofOS">Docs →</a></div>
+      <div class="product"><h3>Sheriff Node</h3><p>Pi 5 air-gapped epistemic witness — ARM64 independent attestation of council decisions. Different silicon, different trust assumptions.</p><a href="https://github.com/Aevion-ai/ProofOS/blob/main/architecture.md">Architecture →</a></div>
     </div>
   </div>
 </section>
@@ -237,29 +216,22 @@
 </section>
 
 <section>
-  <div class="container">
-    <div class="dont">
-      <h3>What We Do NOT Claim</h3>
-      <ul>
-        <li>"fully verified" / "0 sorries" — 104 obligations are open and published.</li>
-        <li>any regulatory certification (FAA, NIST, FIPS, CMVP, FedRAMP).</li>
-        <li>that the architecture defeats the impossibility — it accepts it as ground truth.</li>
-        <li>a behavioral-safety guarantee for arbitrary model outputs.</li>
-        <li>NIST or Anthropic endorsement — independent convergence, not affiliation.</li>
-      </ul>
+  <div class="container split">
+    <div class="card">
+      <h3>The open-obligation surface</h3>
+      <p>We publish the gap list — 104 named obligations across 32 files. Every one is categorized, receipt-stamped, and queued for repair. Most AI vendors report a confidence percentage. We publish what's unproven. An auditor reads the gap list, not a marketing number.</p>
+    </div>
+    <div class="card">
+      <h3>Where to go from here</h3>
+      <p>Read the <a href="https://github.com/Aevion-ai/ProofOS/blob/main/paper.md">paper</a> for the full architecture. Study the <a href="https://github.com/Aevion-ai/ProofOS/blob/main/quorum.md">Quorum Constitution</a> to see how the agent council aggregates. Clone the <a href="https://github.com/Aevion-ai/ProofOS">repo</a> and run the tests. We're applying to the NIST AI Consortium — if measurement science for AI governance is your thing, get in touch.</p>
     </div>
   </div>
 </section>
 
 <footer>
   <div class="container">
-    <p><strong>Aevion LLC</strong> · SDVOSB · Sartell, Minnesota · <a href="mailto:scott@aevion.ai">scott@aevion.ai</a> · <a href="https://github.com/Aevion-ai/ProofOS">github.com/Aevion-ai/ProofOS</a></p>
-    <p class="legal">
-      Primary citation: Vassilev, A. "Robust AI Security and Alignment: A Sisyphean Endeavor?" <em>IEEE Security &amp; Privacy</em>, May 2026. DOI: <code>10.1109/MSEC.2026.3678214</code>.<br>
-      U.S. Provisional Patent Application filed. NIST AI Consortium applicant.<br>
-      License: Apache 2.0 · Scanned with gitleaks — 0 secrets, 0 credentials, 0 internal paths committed across full git history.<br>
-      Not FedRAMP-authorized. No regulatory certification claimed. The open-obligation surface is the product.
-    </p>
+    <p><strong>Aevion LLC</strong> · SDVOSB · Sartell, Minnesota · <a href="mailto:scott@aevion.ai">scott@aevion.ai</a> · <a href="https://github.com/Aevion-ai/ProofOS">GitHub</a></p>
+    <p class="legal">Patent pending. Apache 2.0.</p>
   </div>
 </footer>
 
