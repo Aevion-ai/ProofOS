@@ -5,86 +5,242 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aevion — Proof-Native AI Governance</title>
 <style>
+  :root {
+    --bg: #08080c;
+    --surface: #101014;
+    --border: #1e1e24;
+    --text: #b0b0b8;
+    --text-bright: #e8e8ec;
+    --text-dim: #707078;
+    --accent: #6b8cff;
+    --accent-dim: #3b4f99;
+    --green: #4fa88d;
+    --red: #c06050;
+    --amber: #c0a050;
+  }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: system-ui, -apple-system, sans-serif; background: #0a0a0a; color: #e0e0e0; line-height: 1.6; }
-  .container { max-width: 780px; margin: 0 auto; padding: 4rem 1.5rem; }
-  h1 { font-size: 2.2rem; color: #fff; margin-bottom: 0.75rem; letter-spacing: -0.02em; }
-  h2 { font-size: 1.3rem; color: #aaa; font-weight: 400; margin-bottom: 2rem; }
-  h3 { font-size: 1.1rem; color: #ddd; margin: 2.5rem 0 1rem; }
-  .lede { font-size: 1.05rem; color: #ccc; margin-bottom: 2rem; border-left: 3px solid #555; padding-left: 1rem; }
-  table { width: 100%; border-collapse: collapse; margin: 1rem 0 2rem; }
-  th, td { padding: 0.6rem 0.8rem; text-align: left; border-bottom: 1px solid #222; font-size: 0.9rem; }
-  th { color: #888; font-weight: 500; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
-  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin: 2rem 0; }
-  .metric { background: #111; border: 1px solid #222; padding: 1.2rem; text-align: center; border-radius: 4px; }
-  .metric .value { font-size: 2rem; font-weight: 700; color: #fff; }
-  .metric .label { font-size: 0.8rem; color: #888; margin-top: 0.3rem; }
-  a { color: #7eb8ff; text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  .links { display: flex; gap: 1.5rem; flex-wrap: wrap; margin: 2rem 0; }
-  .links a { background: #111; border: 1px solid #333; padding: 0.6rem 1.2rem; border-radius: 4px; font-size: 0.9rem; }
-  .links a:hover { border-color: #555; text-decoration: none; }
-  .do-not { background: #111; border: 1px solid #333; padding: 1.2rem; border-radius: 4px; font-size: 0.85rem; color: #999; margin: 2rem 0; }
-  .do-not strong { color: #ccc; }
-  footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid #222; font-size: 0.8rem; color: #666; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 880px; margin: 0 auto; padding: 3rem 1.5rem; }
+
+  /* Hero */
+  .hero { padding: 3rem 0 2rem; }
+  .hero h1 { font-size: 2.6rem; color: #fff; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; }
+  .hero .sub { font-size: 1.15rem; color: var(--text-dim); margin-top: 0.6rem; font-weight: 400; }
+
+  /* Convergence banner */
+  .convergence {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 1.5rem; margin: 2rem 0; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;
+  }
+  .conv-item { text-align: center; }
+  .conv-item .date { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 0.3rem; }
+  .conv-item .source { font-size: 0.85rem; font-weight: 600; color: var(--text-bright); margin-bottom: 0.2rem; }
+  .conv-item .signal { font-size: 0.8rem; color: var(--text-dim); line-height: 1.4; }
+
+  /* Metrics */
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border-radius: 8px; overflow: hidden; margin: 2rem 0; }
+  .metric { background: var(--surface); padding: 1.5rem 1rem; text-align: center; }
+  .metric .val { font-size: 2.2rem; font-weight: 700; color: #fff; line-height: 1.1; }
+  .metric .lbl { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.4rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* Map */
+  .map { margin: 2.5rem 0; }
+  .map h3 { font-size: 1.1rem; color: var(--text-bright); margin-bottom: 1rem; }
+  .map table { width: 100%; border-collapse: collapse; }
+  .map th { text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); }
+  .map td { padding: 0.6rem 0.75rem; font-size: 0.88rem; border-bottom: 1px solid var(--border); color: var(--text); }
+  .map td:last-child { color: var(--green); font-size: 0.8rem; }
+  .map td:last-child.eval { color: var(--amber); }
+
+  /* Links */
+  .links { display: flex; gap: 1rem; flex-wrap: wrap; margin: 2rem 0; }
+  .links a {
+    display: inline-block; padding: 0.55rem 1.2rem; border-radius: 6px;
+    font-size: 0.85rem; font-weight: 500; text-decoration: none; transition: all 0.15s;
+  }
+  .links a.primary { background: var(--accent); color: #fff; }
+  .links a.primary:hover { background: #7b99ff; }
+  .links a.secondary { background: var(--surface); color: var(--text-bright); border: 1px solid var(--border); }
+  .links a.secondary:hover { border-color: #333; background: #18181e; }
+
+  /* Sections */
+  .section { margin: 3rem 0; }
+  .section h2 { font-size: 1.4rem; color: #fff; margin-bottom: 1rem; font-weight: 600; }
+  .section h3 { font-size: 1rem; color: var(--text-bright); margin: 1.5rem 0 0.75rem; }
+
+  /* Don't claim */
+  .dont { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 2rem 0; }
+  .dont h3 { color: var(--amber); margin-top: 0; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .dont ul { list-style: none; margin-top: 0.75rem; }
+  .dont li { font-size: 0.85rem; color: var(--text-dim); padding: 0.2rem 0; }
+  .dont li::before { content: "NOT "; color: var(--red); font-weight: 600; font-size: 0.7rem; }
+
+  /* Architecture SVG */
+  .arch { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2rem; margin: 2rem 0; overflow-x: auto; }
+  .arch svg { display: block; margin: 0 auto; max-width: 100%; }
+
+  /* Footer */
+  footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-dim); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+  footer a { color: var(--text-dim); }
+
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 1.8rem; }
+    .convergence { grid-template-columns: 1fr; }
+    .metrics { grid-template-columns: 1fr 1fr; }
+    .map table { font-size: 0.78rem; }
+  }
 </style>
 </head>
 <body>
 <div class="container">
 
-<h1>Aevion</h1>
-<h2>Proof-native governance for frontier AI</h2>
-
-<div class="lede">
-On June 9, 2026, three independent lines of evidence converged:<br>
-<strong>NIST</strong> published a peer-reviewed mathematical proof that no finite guardrail set is universally robust.<br>
-<strong>Anthropic</strong> launched two products from one model — validating that capability and access policy are separate concerns.<br>
-<strong>Aevion</strong> built the proof-native, receipted, auditable control plane that both independently confirm is necessary.
+<!-- Hero -->
+<div class="hero">
+  <h1>Proof-native governance<br>for frontier AI</h1>
+  <p class="sub">Not a stronger guardrail. A receipted update protocol — correctness continuously re-established, not statically claimed.</p>
 </div>
 
+<!-- Links -->
 <div class="links">
-  <a href="https://github.com/Aevion-ai/ProofOS">GitHub — ProofOS</a>
-  <a href="https://github.com/Aevion-ai/ProofOS/blob/main/paper.md">Read the Paper</a>
-  <a href="https://github.com/Aevion-ai/ProofOS/blob/main/architecture.md">Architecture</a>
-  <a href="https://github.com/Aevion-ai/ProofOS/blob/main/quorum.md">Quorum Constitution</a>
-  <a href="mailto:scott@aevion.ai">Contact</a>
+  <a href="https://github.com/Aevion-ai/ProofOS" class="primary">GitHub — ProofOS</a>
+  <a href="https://github.com/Aevion-ai/ProofOS/blob/main/paper.md" class="secondary">Read the Paper</a>
+  <a href="https://github.com/Aevion-ai/ProofOS/blob/main/architecture.md" class="secondary">Architecture</a>
+  <a href="https://github.com/Aevion-ai/ProofOS/blob/main/quorum.md" class="secondary">Quorum Constitution</a>
+  <a href="mailto:scott@aevion.ai" class="secondary">Contact</a>
 </div>
 
-<h3>The Architecture</h3>
-<table>
-<tr><th>NIST Prescription</th><th>Aevion Implementation</th><th>Status</th></tr>
-<tr><td>Continuous monitoring + update</td><td>Cryptographic receipt chain — SHA-256, content-addressed</td><td>Built</td></tr>
-<tr><td>Proactive red-teaming</td><td>Agent Counsel Colony — Byzantine + SIFT agents as standing capability</td><td>Evaluated — 88% auto-pass, 150 cases</td></tr>
-<tr><td>Operational resilience</td><td>Constitutional halt gate + Human Gate + cross-architecture Pi 5 Sheriff attestation</td><td>Built</td></tr>
-</table>
+<!-- Convergence -->
+<div class="convergence">
+  <div class="conv-item">
+    <div class="date">June 9, 2026</div>
+    <div class="source">NIST</div>
+    <div class="signal">Peer-reviewed proof: no finite guardrail set is universally robust against adversarial prompts.</div>
+  </div>
+  <div class="conv-item">
+    <div class="date">June 9, 2026</div>
+    <div class="source">Anthropic</div>
+    <div class="signal">Fable 5 / Mythos 5 — same model, two access envelopes. "Universal jailbreak prevention is likely impossible."</div>
+  </div>
+  <div class="conv-item">
+    <div class="date">June 9, 2026</div>
+    <div class="source">Aevion</div>
+    <div class="signal">ProofOS v1.0 — the proof-native, receipted, auditable control plane both independently confirm is necessary.</div>
+  </div>
+</div>
 
-<h3>ProofOS by the Numbers</h3>
+<!-- Metrics -->
 <div class="metrics">
-  <div class="metric"><div class="value">1,252</div><div class="label">Active Theorems (Lean 4.16.0)</div></div>
-  <div class="metric"><div class="value">96%</div><div class="label">Proof Density</div></div>
-  <div class="metric"><div class="value">104</div><div class="label">Open Obligations (published)</div></div>
-  <div class="metric"><div class="value">88%</div><div class="label">Colony Auto-Pass Rate</div></div>
+  <div class="metric"><div class="val">1,252</div><div class="lbl">Active Theorems</div></div>
+  <div class="metric"><div class="val">96%</div><div class="lbl">Proof Density</div></div>
+  <div class="metric"><div class="val">104</div><div class="lbl">Open Obligations</div></div>
+  <div class="metric"><div class="val">88%</div><div class="lbl">Colony Auto-Pass</div></div>
 </div>
 
-<p style="color:#999;font-size:0.9rem;">The 9% unproven IS the product. We publish the gap list — every obligation named, categorized, and receipt-stamped. An auditor reads the gap list, not a confidence number.</p>
-
-<h3>What We Do NOT Claim</h3>
-<div class="do-not">
-<strong>NOT</strong> "fully verified" — 104 obligations are open and published.<br>
-<strong>NOT</strong> any regulatory certification (FAA, NIST, FIPS, CMVP, FedRAMP).<br>
-<strong>NOT</strong> that the architecture defeats the impossibility — it accepts it as ground truth.<br>
-<strong>NOT</strong> a behavioral-safety guarantee for arbitrary model outputs.<br>
-<strong>NOT</strong> that the open obligations will ever reach zero — a Godelian system cannot close all its own.
+<!-- NIST Mapping -->
+<div class="map">
+  <h3>Vassilev's Three Prescriptions, One System</h3>
+  <table>
+    <tr><th>NIST Says You Need</th><th>Aevion Provides</th><th></th></tr>
+    <tr><td>Continuous monitoring + update cycle</td><td>Receipt chain — SHA-256, content-addressed, every decision auditable</td><td>Built</td></tr>
+    <tr><td>Proactive red-teaming</td><td>Agent Counsel Colony — Byzantine + SIFT agents as standing capability</td><td class="eval">88% auto-pass, 150 cases</td></tr>
+    <tr><td>Operational resilience</td><td>Constitutional halt gate + Human Gate + cross-architecture Pi 5 Sheriff attestation</td><td>Built</td></tr>
+  </table>
 </div>
 
-<p style="margin-top:2rem;font-size:0.9rem;">
-Primary citation: Vassilev, A. "Robust AI Security and Alignment: A Sisyphean Endeavor?"
-<em>IEEE Security &amp; Privacy</em>, May 2026. DOI: <code>10.1109/MSEC.2026.3678214</code>
+<!-- Architecture SVG -->
+<div class="arch">
+  <svg viewBox="0 0 720 580" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif">
+    <defs>
+      <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a1a24"/><stop offset="100%" stop-color="#12121a"/></linearGradient>
+      <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#141420"/><stop offset="100%" stop-color="#0e0e16"/></linearGradient>
+    </defs>
+    <rect width="720" height="580" fill="none"/>
+    <!-- Model -->
+    <rect x="160" y="10" width="400" height="38" rx="6" fill="url(#g1)" stroke="#2a2a36"/>
+    <text x="360" y="34" text-anchor="middle" fill="#888" font-size="12">ANY AI SYSTEM (model, agent, workflow, swarm)</text>
+    <line x1="360" y1="48" x2="360" y2="70" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+    <!-- Halt Gate -->
+    <rect x="160" y="72" width="400" height="38" rx="6" fill="url(#g2)" stroke="#3b4f99"/>
+    <text x="360" y="96" text-anchor="middle" fill="#6b8cff" font-size="12">CONSTITUTIONAL HALT GATE — Lean 4 predicates</text>
+    <line x1="360" y1="110" x2="360" y2="132" stroke="#333" stroke-width="2"/>
+    <!-- Receipt Chain -->
+    <rect x="160" y="134" width="400" height="38" rx="6" fill="url(#g2)" stroke="#3b4f99"/>
+    <text x="360" y="158" text-anchor="middle" fill="#6b8cff" font-size="12">RECEIPT CHAIN — SHA-256, content-addressed, ProofDB</text>
+    <line x1="360" y1="172" x2="360" y2="194" stroke="#333" stroke-width="2"/>
+    <!-- Colony -->
+    <rect x="110" y="196" width="500" height="90" rx="8" fill="url(#g1)" stroke="#2a2a36"/>
+    <text x="360" y="216" text-anchor="middle" fill="#888" font-size="11">AGENT COUNSEL COLONY</text>
+    <rect x="122" y="228" width="75" height="28" rx="4" fill="#14141e" stroke="#2a2a3a"/>
+    <text x="159" y="246" text-anchor="middle" fill="#aaa" font-size="10">Deterministic</text>
+    <rect x="204" y="228" width="75" height="28" rx="4" fill="#14141e" stroke="#2a2a3a"/>
+    <text x="241" y="246" text-anchor="middle" fill="#aaa" font-size="10">Stochastic</text>
+    <rect x="286" y="228" width="75" height="28" rx="4" fill="#14141e" stroke="#2a2a3a"/>
+    <text x="323" y="246" text-anchor="middle" fill="#aaa" font-size="10">NonDetermin.</text>
+    <rect x="368" y="228" width="75" height="28" rx="4" fill="#14141e" stroke="#2a2a3a"/>
+    <text x="405" y="246" text-anchor="middle" fill="#c06050" font-size="10">Byzantine</text>
+    <rect x="450" y="228" width="75" height="28" rx="4" fill="#14141e" stroke="#2a2a3a"/>
+    <text x="487" y="246" text-anchor="middle" fill="#aaa" font-size="10">DiF</text>
+    <rect x="532" y="228" width="66" height="28" rx="4" fill="#14141e" stroke="#2a2a3a"/>
+    <text x="565" y="246" text-anchor="middle" fill="#aaa" font-size="10">SIFT</text>
+    <rect x="452" y="262" width="75" height="18" rx="3" fill="#14141e" stroke="#333"/>
+    <text x="489" y="275" text-anchor="middle" fill="#888" font-size="9">Arbiter</text>
+    <text x="555" y="275" fill="#666" font-size="8">88% auto-pass</text>
+    <text x="130" y="275" fill="#666" font-size="8">CircuitBreaker + AgentSandbox + DeterministicReplay</text>
+    <line x1="360" y1="286" x2="360" y2="310" stroke="#333" stroke-width="2"/>
+    <!-- Human Gate -->
+    <rect x="160" y="312" width="400" height="38" rx="6" fill="url(#g2)" stroke="#3b4f99"/>
+    <text x="360" y="336" text-anchor="middle" fill="#6b8cff" font-size="12">HUMAN GATE — escalation when guardrails disagree</text>
+    <line x1="360" y1="350" x2="360" y2="380" stroke="#333" stroke-width="2"/>
+    <!-- Three roots -->
+    <line x1="140" y1="380" x2="580" y2="380" stroke="#333" stroke-width="1"/>
+    <line x1="200" y1="380" x2="200" y2="400" stroke="#333" stroke-width="2"/>
+    <line x1="360" y1="380" x2="360" y2="400" stroke="#333" stroke-width="2"/>
+    <line x1="520" y1="380" x2="520" y2="400" stroke="#333" stroke-width="2"/>
+    <rect x="90" y="402" width="220" height="52" rx="6" fill="#14141e" stroke="#2a2a3a"/>
+    <text x="200" y="420" text-anchor="middle" fill="#4fa88d" font-size="10">OPEN-OBLIGATION SURFACE</text>
+    <text x="200" y="436" text-anchor="middle" fill="#666" font-size="9">104 obligations, 32 files, 91% discharged</text>
+    <text x="200" y="449" text-anchor="middle" fill="#888" font-size="9">Godellian gap register — the product</text>
+    <rect x="250" y="402" width="220" height="52" rx="6" fill="#14141e" stroke="#2a2a3a"/>
+    <text x="360" y="420" text-anchor="middle" fill="#4fa88d" font-size="10">PHYSICAL ROOT OF TRUST</text>
+    <text x="360" y="436" text-anchor="middle" fill="#666" font-size="9">Pi 5 Sheriff (ARM64, Linux, Ollama)</text>
+    <text x="360" y="449" text-anchor="middle" fill="#888" font-size="9">Cross-architecture independent attestation</text>
+    <rect x="410" y="402" width="220" height="52" rx="6" fill="#14141e" stroke="#2a2a3a"/>
+    <text x="520" y="420" text-anchor="middle" fill="#4fa88d" font-size="10">QUANTUM WITNESS TILES</text>
+    <text x="520" y="436" text-anchor="middle" fill="#666" font-size="9">Wukong Bell, QGOV Predict</text>
+    <text x="520" y="449" text-anchor="middle" fill="#888" font-size="9">Hardware-vs-simulator TVD</text>
+    <line x1="200" y1="454" x2="200" y2="470" stroke="#333" stroke-width="1"/>
+    <line x1="360" y1="454" x2="360" y2="470" stroke="#333" stroke-width="1"/>
+    <line x1="520" y1="454" x2="520" y2="470" stroke="#333" stroke-width="1"/>
+    <rect x="200" y="472" width="320" height="24" rx="6" fill="#14141e" stroke="#2a2a3a"/>
+    <text x="360" y="488" text-anchor="middle" fill="#6b8cff" font-size="10">Receipt Chain Anchors All Three Roots</text>
+  </svg>
+</div>
+
+<!-- What we don't claim -->
+<div class="dont">
+  <h3>What We Do NOT Claim</h3>
+  <ul>
+    <li>"fully verified" / "0 sorries" — 104 obligations are open and published.</li>
+    <li>any regulatory certification (FAA, NIST, FIPS, CMVP, FedRAMP).</li>
+    <li>that the architecture defeats the impossibility — it accepts it as ground truth.</li>
+    <li>a behavioral-safety guarantee for arbitrary model outputs.</li>
+    <li>that open obligations will ever reach zero — a Godelian system cannot close all its own.</li>
+  </ul>
+</div>
+
+<!-- Citation -->
+<p style="margin-top:1.5rem;font-size:0.82rem;color:var(--text-dim);">
+  Primary citation: Vassilev, A. "Robust AI Security and Alignment: A Sisyphean Endeavor?"
+  <em>IEEE Security &amp; Privacy</em>, May 2026. DOI: <code style="color:var(--accent-dim)">10.1109/MSEC.2026.3678214</code>
 </p>
 
 <footer>
-Aevion LLC &mdash; SDVOSB &mdash; Sartell, Minnesota &mdash; <a href="mailto:scott@aevion.ai">scott@aevion.ai</a><br>
-NIST AI Consortium applicant &mdash; Patent pending
+  <span>Aevion LLC &mdash; SDVOSB &mdash; Sartell, Minnesota</span>
+  <span><a href="mailto:scott@aevion.ai">scott@aevion.ai</a> &middot; NIST AI Consortium applicant &middot; Patent pending</span>
 </footer>
 
 </div>
