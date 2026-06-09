@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aevion — Proof-Native AI Governance</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #0a0a0a; color: #e0e0e0; line-height: 1.6; }
+  .container { max-width: 780px; margin: 0 auto; padding: 4rem 1.5rem; }
+  h1 { font-size: 2.2rem; color: #fff; margin-bottom: 0.75rem; letter-spacing: -0.02em; }
+  h2 { font-size: 1.3rem; color: #aaa; font-weight: 400; margin-bottom: 2rem; }
+  h3 { font-size: 1.1rem; color: #ddd; margin: 2.5rem 0 1rem; }
+  .lede { font-size: 1.05rem; color: #ccc; margin-bottom: 2rem; border-left: 3px solid #555; padding-left: 1rem; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0 2rem; }
+  th, td { padding: 0.6rem 0.8rem; text-align: left; border-bottom: 1px solid #222; font-size: 0.9rem; }
+  th { color: #888; font-weight: 500; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin: 2rem 0; }
+  .metric { background: #111; border: 1px solid #222; padding: 1.2rem; text-align: center; border-radius: 4px; }
+  .metric .value { font-size: 2rem; font-weight: 700; color: #fff; }
+  .metric .label { font-size: 0.8rem; color: #888; margin-top: 0.3rem; }
+  a { color: #7eb8ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .links { display: flex; gap: 1.5rem; flex-wrap: wrap; margin: 2rem 0; }
+  .links a { background: #111; border: 1px solid #333; padding: 0.6rem 1.2rem; border-radius: 4px; font-size: 0.9rem; }
+  .links a:hover { border-color: #555; text-decoration: none; }
+  .do-not { background: #111; border: 1px solid #333; padding: 1.2rem; border-radius: 4px; font-size: 0.85rem; color: #999; margin: 2rem 0; }
+  .do-not strong { color: #ccc; }
+  footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid #222; font-size: 0.8rem; color: #666; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Aevion</h1>
+<h2>Proof-native governance for frontier AI</h2>
+
+<div class="lede">
+On June 9, 2026, three independent lines of evidence converged:<br>
+<strong>NIST</strong> published a peer-reviewed mathematical proof that no finite guardrail set is universally robust.<br>
+<strong>Anthropic</strong> launched two products from one model — validating that capability and access policy are separate concerns.<br>
+<strong>Aevion</strong> built the proof-native, receipted, auditable control plane that both independently confirm is necessary.
+</div>
+
+<div class="links">
+  <a href="https://github.com/Aevion-ai/ProofOS">GitHub — ProofOS</a>
+  <a href="https://github.com/Aevion-ai/ProofOS/blob/main/paper.md">Read the Paper</a>
+  <a href="https://github.com/Aevion-ai/ProofOS/blob/main/architecture.md">Architecture</a>
+  <a href="https://github.com/Aevion-ai/ProofOS/blob/main/quorum.md">Quorum Constitution</a>
+  <a href="mailto:scott@aevion.ai">Contact</a>
+</div>
+
+<h3>The Architecture</h3>
+<table>
+<tr><th>NIST Prescription</th><th>Aevion Implementation</th><th>Status</th></tr>
+<tr><td>Continuous monitoring + update</td><td>Cryptographic receipt chain — SHA-256, content-addressed</td><td>Built</td></tr>
+<tr><td>Proactive red-teaming</td><td>Agent Counsel Colony — Byzantine + SIFT agents as standing capability</td><td>Evaluated — 88% auto-pass, 150 cases</td></tr>
+<tr><td>Operational resilience</td><td>Constitutional halt gate + Human Gate + cross-architecture Pi 5 Sheriff attestation</td><td>Built</td></tr>
+</table>
+
+<h3>ProofOS by the Numbers</h3>
+<div class="metrics">
+  <div class="metric"><div class="value">1,252</div><div class="label">Active Theorems (Lean 4.16.0)</div></div>
+  <div class="metric"><div class="value">96%</div><div class="label">Proof Density</div></div>
+  <div class="metric"><div class="value">104</div><div class="label">Open Obligations (published)</div></div>
+  <div class="metric"><div class="value">88%</div><div class="label">Colony Auto-Pass Rate</div></div>
+</div>
+
+<p style="color:#999;font-size:0.9rem;">The 9% unproven IS the product. We publish the gap list — every obligation named, categorized, and receipt-stamped. An auditor reads the gap list, not a confidence number.</p>
+
+<h3>What We Do NOT Claim</h3>
+<div class="do-not">
+<strong>NOT</strong> "fully verified" — 104 obligations are open and published.<br>
+<strong>NOT</strong> any regulatory certification (FAA, NIST, FIPS, CMVP, FedRAMP).<br>
+<strong>NOT</strong> that the architecture defeats the impossibility — it accepts it as ground truth.<br>
+<strong>NOT</strong> a behavioral-safety guarantee for arbitrary model outputs.<br>
+<strong>NOT</strong> that the open obligations will ever reach zero — a Godelian system cannot close all its own.
+</div>
+
+<p style="margin-top:2rem;font-size:0.9rem;">
+Primary citation: Vassilev, A. "Robust AI Security and Alignment: A Sisyphean Endeavor?"
+<em>IEEE Security &amp; Privacy</em>, May 2026. DOI: <code>10.1109/MSEC.2026.3678214</code>
+</p>
+
+<footer>
+Aevion LLC &mdash; SDVOSB &mdash; Sartell, Minnesota &mdash; <a href="mailto:scott@aevion.ai">scott@aevion.ai</a><br>
+NIST AI Consortium applicant &mdash; Patent pending
+</footer>
+
+</div>
+</body>
+</html>
