@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Paper
+    url: https://github.com/Aevion-ai/ProofOS/blob/main/paper.md
+    about: Read the ProofOS paper
+  - name: Architecture
+    url: https://github.com/Aevion-ai/ProofOS/blob/main/architecture.md
+    about: Read the architecture docs
