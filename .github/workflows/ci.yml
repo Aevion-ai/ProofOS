@@ -17,6 +17,10 @@ jobs:
           cache: 'pip'
       - run: pip install -r requirements.txt 2>/dev/null || pip install pytest pydantic jsonschema
       - run: pytest tests/ -q
+      - run: pip install -r requirements.txt 2>/dev/null || pip install pytest pydantic
+      - run: pytest tests/ -q
+        env:
+          PYTHONPATH: .
 
   metric-gate:
     runs-on: ubuntu-latest
