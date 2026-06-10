@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import pathlib
 import re
-import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
@@ -49,16 +48,46 @@ def lean_inventory() -> dict:
 
 
 def num(s: str) -> int:
+    """Parse a claim number that may carry thousands separators."""
     return int(s.replace(",", "").replace("%20", "").strip())
 
 
+def iter_surface_files():
+    """Yield every file under the configured public surfaces."""
+    for entry in PUBLIC_SURFACES:
+        p = ROOT / entry
+        candidates = p.rglob("*") if p.is_dir() else [p]
+        for f in candidates:
+            if f.is_file():
+                yield f
+
+
+def scan_text(rel, text, claims, deny, density):
+    """Return violations found in one file's text."""
+    found = []
+    for m in deny.finditer(text):
+        found.append(f"{rel}: forbidden token '{m.group(0)[:40]}'")
+    for rx, kind, ceiling in claims:
+        for m in rx.finditer(text):
+            try:
+                claimed = num(m.group(1))
+            except ValueError:
+                continue
+            if claimed > ceiling:
+                found.append(
+                    f"{rel}: claims {claimed} {kind} > actual {ceiling} "
+                    f"('{m.group(0)[:40]}')")
+    if density.search(text):
+        found.append(f"{rel}: publishes a proof-density % (this repo publishes none)")
+    return found
+
+
 def main() -> int:
+    """Scan public surfaces; exit 1 on any claim exceeding the inventory."""
     inv = lean_inventory()
     print(f"[metric_gate] lean inventory: {inv['files']} files, "
           f"{inv['theorems']} theorem decls, {inv['sorries']} sorry")
-    v: list[str] = []
     deny = re.compile("|".join(DENYLIST))
-
     # structural claim patterns: (regex, kind, ceiling)
     claims = [
         (re.compile(r"([\d,]+)\s*(?:Lean\s*4?\s*)?theorems?", re.I), "theorems", inv["theorems"]),
@@ -67,29 +96,13 @@ def main() -> int:
     ]
     density = re.compile(r"\d+(?:\.\d+)?%\s*(?:proof\s*)?density", re.I)
 
-    for entry in PUBLIC_SURFACES:
-        p = ROOT / entry
-        files = (list(p.rglob("*")) if p.is_dir() else [p])
-        for f in files:
-            if not f.is_file():
-                continue
-            try:
-                text = f.read_text(encoding="utf-8", errors="ignore")
-            except OSError:
-                continue
-            rel = f.relative_to(ROOT)
-            for m in deny.finditer(text):
-                v.append(f"{rel}: forbidden token '{m.group(0)[:40]}'")
-            for rx, kind, ceiling in claims:
-                for m in rx.finditer(text):
-                    try:
-                        claimed = num(m.group(1))
-                    except ValueError:
-                        continue
-                    if claimed > ceiling:
-                        v.append(f"{rel}: claims {claimed} {kind} > actual {ceiling} ('{m.group(0)[:40]}')")
-            if density.search(text):
-                v.append(f"{rel}: publishes a proof-density % (this repo publishes none)")
+    v: list[str] = []
+    for f in iter_surface_files():
+        try:
+            text = f.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        v.extend(scan_text(f.relative_to(ROOT), text, claims, deny, density))
 
     if inv["files"] == 0:
         v.append("lean/: no .lean files (inventory sanity floor)")
