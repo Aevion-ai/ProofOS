@@ -1,7 +1,7 @@
 # ProofOS Architecture Diagram
 
 **Date:** 2026-06-09
-**Status:** Canonical — use for all external communication (papers, proposals, product page)
+**Status:** Architecture reference. External-facing use still passes claim review; numbers describe **this public repository**, not the private corpus.
 
 ---
 
@@ -22,7 +22,7 @@
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                        CONSTITUTIONAL HALT GATE                          │
 │  Lean 4 predicates — blocks transition if guard fails                    │
-│  haltSoundness (proved) | barrierInvariance (proved) | byzantine (proved)│
+│  haltSoundness (proved, 0 sorry) | accessTier ordering (proved, 0 sorry)  │
 └────────────────────────────────────┬────────────────────────────────────┘
                                      │
                                      ▼
@@ -78,10 +78,10 @@
 │ OPEN-OBLIGATION │   │  PHYSICAL ROOT      │   │  QUANTUM WITNESS    │
 │ SURFACE         │   │  OF TRUST           │   │  TILES              │
 │                 │   │                     │   │                     │
-│ 1,252 theorems  │   │  Pi Sheriff Node    │   │  Wukong Bell        │
-│ 96% density     │   │  Pi 5 (ARM64)       │   │  QGOV Predict       │
-│ 104 obligations │   │  LCD + Camera       │   │  kirin_fold TVD     │
-│ 32 files        │   │  DHT11 Sensor       │   │  NISQ noise detect  │
+│ 4 proved (0 srry)│   │  Pi Sheriff Node    │   │  Hardware witness   │
+│ 2 open oblig.   │   │  Pi 5 (ARM64)       │   │  Simulator control  │
+│ 2 modules       │   │  LCD + Camera       │   │  TVD delta check    │
+│ public repo     │   │  DHT11 Sensor       │   │  NISQ noise detect  │
 │ Gödel register  │   │  Ollama inference   │   │  INTERNAL_ONLY      │
 └─────────────────┘   └─────────────────────┘   └─────────────────────┘
 ```
@@ -91,8 +91,8 @@
 | Layer | Vassilev Prescription | Proof |
 |-------|----------------------|-------|
 | Constitutional Halt Gate + Receipt Chain | Continuous monitoring + update cycle | receipt chain SHA-256, canonical serialization |
-| Agent Counsel Colony (Byzantine + SIFT) | Proactive red-teaming | 150-case eval: 88% auto-pass, 4% veto |
-| Human Gate + Open-Obligation Surface | Resilience mechanisms | 104 named obligations, 12% escalation rate |
+| Agent Counsel Colony (Byzantine + SIFT) | Proactive red-teaming | internal 150-case eval (harness not vendored here): 88% auto-pass, 4% veto |
+| Human Gate + Open-Obligation Surface | Resilience mechanisms | 2 named obligations (this repo), 12% escalation rate |
 
 ## Why Three Roots of Trust
 

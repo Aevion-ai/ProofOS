@@ -14,19 +14,17 @@ test('aevion.ai renders correctly', async ({ page }) => {
   await expect(page.locator('h1')).toContainText(/Proof|Governance|Aevion/i, { timeout: 10000 });
 
   // KPI dashboard — exact match to avoid strict mode violation with supporting text
-  await expect(page.getByText('1,252', { exact: true })).toBeVisible({ timeout: 10000 });
-  await expect(page.getByText('96%', { exact: true })).toBeVisible();
-  await expect(page.getByText('104', { exact: true })).toBeVisible();
+  await expect(page.getByText('Proved (public repo)')).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText('Open Obligations')).toBeVisible();
+  await expect(page.getByText('Colony Auto-Pass')).toBeVisible();
 
   // Verify hero content is visible
   await expect(page.getByText('Proof-Native')).toBeVisible({ timeout: 10000 });
   await expect(page.getByText('GOVERNANCE')).toBeVisible();
   await expect(page.getByText('for Frontier AI')).toBeVisible();
-  await expect(page.getByText('NIST published the proof')).toBeVisible();
+  await expect(page.getByText('Static guardrails are formally insufficient')).toBeVisible();
 
   // Verify KPI cards
-  await expect(page.getByText('1,252', { exact: true })).toBeVisible();
-  await expect(page.getByText('96%', { exact: true })).toBeVisible();
   await expect(page.getByText('88%', { exact: true })).toBeVisible();
 
   // Navigate to Platform Products tab

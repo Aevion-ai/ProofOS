@@ -175,8 +175,8 @@ The constitution is the formal acknowledgment that Vassilev's theorem applies: n
 
 ## 8. Implementation
 
-- **Specification:** This document (`docs/architecture/quorum_constitution.md`)
-- **Implementation:** `integrations/tinker_cookbook/src/counsel/colony.py` — `CounselArbiterEnv`
-- **Verification:** `py -3 -m integrations.tinker_cookbook.src.counsel.eval --n-problems 150`
+- **Specification:** This document (`quorum.md`)
+- **Implementation:** `CounselArbiterEnv` in the private Aevion stack (`colony.py`) — not vendored in this public repository
+- **Verification:** internal eval harness (150-problem corpus); results reported as internal, not reproducible from this repo
 - **Version:** 1.0
 - **Receipt:** Every eval run emits a receipt citing this constitution version

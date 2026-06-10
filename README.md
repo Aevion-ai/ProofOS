@@ -13,7 +13,7 @@
 
 ProofOS wraps AI agent decisions in a constitutional halt gate backed by Lean 4 proofs. When an agent proposes an action, the system checks it against declared safety predicates. If the check passes, a SHA-256 receipt is emitted. If it fails, the action is blocked. Every receipt is content-addressed, append-only, and independently verifiable.
 
-The architecture was validated on June 9, 2026 when NIST published a proof that no finite guardrail set is universally robust — three independent lines of evidence converged on the same architectural prescription. ProofOS implements all three: continuous monitoring via receipt chains, proactive red-teaming via a multi-agent counsel colony, and operational resilience via constitutional halt gates and human-in-the-loop escalation.
+The design follows a published impossibility result (Vassilev, *IEEE S&P*, 2026) that no finite guardrail set is universally robust, and implements the three architectural responses it motivates: continuous monitoring via receipt chains, proactive red-teaming via a multi-agent counsel colony, and operational resilience via constitutional halt gates and human-in-the-loop escalation. (This is convergence on a shared prescription, not an endorsement of ProofOS by NIST.)
 
 ```
 Agent Action → Halt Gate (Lean 4 predicate) → Colony Review (7 agents) → Receipt (SHA-256) → Ledger
@@ -47,8 +47,7 @@ ProofOS/
 ├── schemas/                  # JSON Schema specifications
 ├── tests/                    # Python test suite (20/20)
 ├── e2e/                      # Playwright end-to-end tests
-├── docs/                     # Landing page (aevion.ai)
-├── paper.md                  # Technical paper
+├── docs/                     # Landing page (aevion.ai) + draft paper PDF
 ├── architecture.md           # System diagram
 ├── quorum.md                 # Agent Counsel Colony constitution
 ├── requirements.txt          # Python dependencies
@@ -100,11 +99,11 @@ The architecture is specified in the Quorum Constitution. Implementation and eva
 | `fallback_preserves_safety` | [CapabilityAccessSeparation.lean](lean/CapabilityAccessSeparation.lean) | Reducible sorry |
 | `haltSoundness` | [LeishmanBerger.lean](lean/LeishmanBerger.lean) | Proved |
 
-Note: the full Lean 4 corpus (1,252 theorems, 96% density across 343 files) is maintained in the private Aevion-Verifiable-AI repository. Contact scott@aevion.ai for access.
+Note: the broader Lean 4 corpus is maintained privately in the Aevion-Verifiable-AI repository; its counts are not reproduced here to avoid publishing figures that cannot be checked from this repo. Contact scott@aevion.ai for access.
 
 ## Paper
 
-[Proof-Native Constitutional Harnesses: An Architecture with a Published Open-Obligation Surface](paper.md)
+*Proof-Native Constitutional Harnesses: An Architecture with a Published Open-Obligation Surface* — in preparation; not yet submitted. Working [draft PDF](docs/papers/proofos_architecture_arxiv_v1.pdf).
 
 ## License
 
