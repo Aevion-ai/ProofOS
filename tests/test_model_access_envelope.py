@@ -190,6 +190,59 @@ class TestAnthropicMapping:
         assert aevion.retention_policy_days >= 30
 
 
+class TestSchemaValidation:
+    """Validate Python implementation against JSON Schema."""
+
+    def test_schema_validation_roundtrip(self) -> None:
+        import json
+        from pathlib import Path
+        import jsonschema
+
+        schema_path = Path(__file__).parent.parent / "schemas" / "model_access_envelope.schema.json"
+        schema = json.loads(schema_path.read_text())
+
+        for e in [
+            ModelAccessEnvelope.fable_5(),
+            ModelAccessEnvelope.mythos_5(),
+            ModelAccessEnvelope.aevion_proof_os("test-model"),
+            ModelAccessEnvelope(
+                model_id="public-model",
+                capability_class=CapabilityClass.GENERAL,
+                access_tier=AccessTier.PUBLIC,
+                safeguard_mode=SafeguardMode.FULL,
+                fallback_model="safe-fallback",
+            ),
+            ModelAccessEnvelope(
+                model_id="restricted-model",
+                capability_class=CapabilityClass.DUAL_USE_CRITICAL,
+                access_tier=AccessTier.TRUSTED_ACCESS,
+                safeguard_mode=SafeguardMode.FULL,
+                fallback_model="safe-fallback",
+            ),
+        ]:
+            jsonschema.validate(e.to_dict(), schema)
+
+    def test_schema_rejects_invalid(self) -> None:
+        """Schema should reject envelopes that violate constraints."""
+        import json
+        from pathlib import Path
+        import jsonschema
+
+        schema_path = Path(__file__).parent.parent / "schemas" / "model_access_envelope.schema.json"
+        schema = json.loads(schema_path.read_text())
+
+        # PUBLIC tier without fallback
+        with pytest.raises((jsonschema.ValidationError, ValueError)):
+            invalid = ModelAccessEnvelope(
+                model_id="bad-public",
+                capability_class=CapabilityClass.GENERAL,
+                access_tier=AccessTier.PUBLIC,
+                safeguard_mode=SafeguardMode.FULL,
+                fallback_model="",
+            )
+            jsonschema.validate(invalid.to_dict(), schema)
+
+
 class TestSerialization:
     """Envelope serialization."""
 

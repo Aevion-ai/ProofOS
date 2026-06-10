@@ -1,0 +1,13 @@
+{
+  "name": "proofos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ProofOS — receipt chain for Lean 4 proof obligations",
+  "scripts": {
+    "test": "npx playwright test --reporter=line",
+    "test:headed": "npx playwright test --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0"
+  }
+}

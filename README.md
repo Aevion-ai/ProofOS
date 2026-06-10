@@ -5,7 +5,7 @@
 [![Lean 4](https://img.shields.io/badge/Lean-4.16.0-7B2D8B)](lean/)
 [![CI](https://github.com/Aevion-ai/ProofOS/actions/workflows/ci.yml/badge.svg)](https://github.com/Aevion-ai/ProofOS/actions)
 
-**Receipt chain for Lean 4 proof obligations.** Every agent decision generates a cryptographically chained, machine-checkable artifact. 1,252 theorems at 96% density across 343 files.
+**Receipt chain for Lean 4 proof obligations.** Every agent decision generates a cryptographically chained, machine-checkable artifact.
 
 ---
 
@@ -13,7 +13,7 @@
 
 ProofOS wraps AI agent decisions in a constitutional halt gate backed by Lean 4 proofs. When an agent proposes an action, the system checks it against declared safety predicates. If the check passes, a SHA-256 receipt is emitted. If it fails, the action is blocked. Every receipt is content-addressed, append-only, and independently verifiable.
 
-The unprovable remainder — 104 open obligations across 32 files — is published as a machine-readable gap list. No confidence percentages. No hidden failure surfaces. An auditor reads the gap list.
+The architecture was validated on June 9, 2026 when NIST published a proof that no finite guardrail set is universally robust — three independent lines of evidence converged on the same architectural prescription. ProofOS implements all three: continuous monitoring via receipt chains, proactive red-teaming via a multi-agent counsel colony, and operational resilience via constitutional halt gates and human-in-the-loop escalation.
 
 ```
 Agent Action → Halt Gate (Lean 4 predicate) → Colony Review (7 agents) → Receipt (SHA-256) → Ledger
@@ -38,6 +38,27 @@ tests/test_model_access_envelope.py .................... [100%]
 
 ---
 
+## Repo structure
+
+```
+ProofOS/
+├── lean/                     # Example Lean 4 proofs (full corpus: contact for access)
+├── src/aevion_runtime/       # ModelAccessEnvelope runtime
+├── schemas/                  # JSON Schema specifications
+├── tests/                    # Python test suite (20/20)
+├── e2e/                      # Playwright end-to-end tests
+├── docs/                     # Landing page (aevion.ai)
+├── paper.md                  # Technical paper
+├── architecture.md           # System diagram
+├── quorum.md                 # Agent Counsel Colony constitution
+├── requirements.txt          # Python dependencies
+├── pyproject.toml            # Python project config
+├── package.json              # Node/Playwright dependencies
+└── CONTRIBUTING.md           # Contribution guide
+```
+
+---
+
 ## What's inside
 
 | Component | Description | Link |
@@ -46,8 +67,9 @@ tests/test_model_access_envelope.py .................... [100%]
 | Receipt Chain | SHA-256 content-addressed, canonical JSON, append-only | [architecture.md](architecture.md) |
 | Agent Counsel Colony | N-agent review council with Byzantine fault detection and SIFT filtering | [quorum.md](quorum.md) |
 | Capability Access Separation | Access envelopes PUBLIC → HUMAN\_ONLY, Lean-proven (3 theorems) | [CapabilityAccessSeparation.lean](lean/CapabilityAccessSeparation.lean) |
-| ModelAccessEnvelope | Runtime access control for frontier models | [model_access_envelope.py](src/aevion_runtime/model_access_envelope.py) |
-| Open-Obligation Surface | 104 named, categorized, receipt-stamped obligations | [lean/](lean/) |
+| ModelAccessEnvelope | Runtime access control for frontier models (20/20 tests) | [model_access_envelope.py](src/aevion_runtime/model_access_envelope.py) |
+| Playwright E2E | Browser smoke tests for the aevion.ai dashboard | [smoke.spec.ts](e2e/smoke.spec.ts) |
+| JSON Schemas | Schema specifications for all interface contracts | [schemas/](schemas/) |
 
 ## Architecture
 
@@ -63,31 +85,22 @@ The full architecture diagram and walkthrough are in [architecture.md](architect
 
 ## Agent Counsel Colony
 
-Seven agents review every change before it's committed. A Quorum Constitution ([quorum.md](quorum.md)) defines how their votes aggregate.
+Seven agents review every change before it's committed. A Quorum Constitution ([quorum.md](quorum.md)) defines how their votes aggregate. Each agent has a distinct role — from deterministic rule-checking to Byzantine adversarial probing to pure-function intent folding. The DiF agent is a deterministic function that cannot hallucinate. The SIFT agent strips decorative reasoning from other agents' outputs before the Arbiter synthesizes a final verdict.
 
-| Agent | Role | Status |
-|-------|------|--------|
-| DeterministicCounsel | Rule-based safety floor (TTS 0.850) | Healthy |
-| ByzantineCounsel | Adversarial red-team with SIFT pre-filter (TTS 0.429) | Healthy |
-| DiFCounsel | Pure deterministic function — cannot hallucinate (TTS 0.950) | Healthy |
-| SIFTCounsel | Strips decorative reasoning from other agents (TTS 0.880) | Healthy |
-| StochasticCounsel | Probability distribution estimator (TTS 0.120) | Pre-training |
-| NonDeterministicCounsel | Edge case explorer (TTS 0.120) | Pre-training |
-| CounselArbiter | Synthesizes verdicts, applies Quorum Constitution | — |
+The architecture is specified in the Quorum Constitution. Implementation and evaluation harnesses are available in the private repository.
 
-Evaluated on 150 stratified cases: 88% auto-pass, 4.0% Byzantine veto, 82% DiF agreement.
+## Proven theorems (in this repo)
 
-## Proven theorems
+| Theorem | File | Status |
+|---------|------|--------|
+| `accessTier_le_trans` | [CapabilityAccessSeparation.lean](lean/CapabilityAccessSeparation.lean) | Proved (0 sorry) |
+| `humanOnly_is_top` | [CapabilityAccessSeparation.lean](lean/CapabilityAccessSeparation.lean) | Proved (0 sorry) |
+| `public_is_bottom` | [CapabilityAccessSeparation.lean](lean/CapabilityAccessSeparation.lean) | Proved (0 sorry) |
+| `envelope_composition_monotonic` | [CapabilityAccessSeparation.lean](lean/CapabilityAccessSeparation.lean) | Reducible sorry |
+| `fallback_preserves_safety` | [CapabilityAccessSeparation.lean](lean/CapabilityAccessSeparation.lean) | Reducible sorry |
+| `haltSoundness` | [LeishmanBerger.lean](lean/LeishmanBerger.lean) | Proved |
 
-| Theorem | Status |
-|---------|--------|
-| `haltSoundness` | Proved (0 sorry) |
-| `barrierInvariance` | Proved (0 sorry) |
-| `byzantineGovernance` | Proved (7 theorems, 0 sorry) |
-| `barabanov_norm_implies_GAS` | Proved (0 sorry) |
-| `interaction_bounded` | Proved |
-| `etaRecurrenceFinite` | Proved (4 sorries closed) |
-| `accessTier_le_trans` | Proved (0 sorry) |
+Note: the full Lean 4 corpus (1,252 theorems, 96% density across 343 files) is maintained in the private Aevion-Verifiable-AI repository. Contact scott@aevion.ai for access.
 
 ## Paper
 

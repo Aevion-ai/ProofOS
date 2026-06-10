@@ -1,0 +1,20 @@
+[project]
+name = "proofos"
+version = "1.0.0"
+description = "Proof-native governance for frontier AI — receipt chain for Lean 4 proof obligations"
+requires-python = ">=3.10"
+dependencies = [
+    "pytest>=8.0",
+    "pydantic>=2.0",
+    "jsonschema>=4.20",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest-asyncio",
+    "hypothesis",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
