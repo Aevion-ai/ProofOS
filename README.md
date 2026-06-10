@@ -1,142 +1,97 @@
-# Aevion ProofOS
+# ProofOS
 
-## One Sentence
-
-> **NIST published the proof. Anthropic launched the product architecture. Aevion built the proof-native control plane. All on June 9, 2026.**
+**Receipt chain for Lean 4 proof obligations.** Every agent decision generates a cryptographically chained, machine-checkable artifact. 1,252 theorems at 96% density across 343 files.
 
 ---
 
-## The Problem
+## What it does
 
-On June 9, 2026, Apostol Vassilev (NIST) published Theorem II.1 in *IEEE Security & Privacy*: **no finite set of guardrails is universally robust against adversarial prompts.** This is a Gödel-Chaitin reduction applied to AI safety. It proves that any static checker \( C_\Pi \) will always miss some adversarial truth \( T_\Pi \).
+ProofOS wraps AI agent decisions in a constitutional halt gate backed by Lean 4 proofs. When an agent proposes an action, the system checks it against declared safety predicates. If the check passes, a SHA-256 receipt is emitted. If it fails, the action is blocked. Every receipt is content-addressed, append-only, and independently verifiable.
 
-Every AI safety system that reports a confidence percentage ("99.7% safe") has an invisible 0.3% failure surface. You don't know what you don't know. And Theorem II.1 proves you never will — not with a static guardrail.
-
-## The Architecture
-
-ProofOS is not a stronger static checker. It is a **receipted update protocol** — a dynamic system whose correctness is continuously re-established rather than statically claimed.
+The unprovable remainder — 104 open obligations across 32 files — is published as a machine-readable gap list. No confidence percentages. No hidden failure surfaces. An auditor reads the gap list.
 
 ```
-                    ┌──────────────────────────────────┐
-                    │     ANY AI SYSTEM                 │
-                    └──────────────┬───────────────────┘
-                                   │
-                    ┌──────────────▼───────────────────┐
-                    │   CONSTITUTIONAL HALT GATE        │
-                    │   Lean 4 predicates               │
-                    └──────────────┬───────────────────┘
-                                   │
-                    ┌──────────────▼───────────────────┐
-                    │   RECEIPT CHAIN                   │
-                    │   SHA-256, content-addressed      │
-                    └──────────────┬───────────────────┘
-                                   │
-                    ┌──────────────▼───────────────────┐
-                    │   AGENT COUNSEL COLONY (N agents) │
-                    │   Red-team + filter + arbitrate   │
-                    │   88% auto-pass | 4% veto | 82%   │
-                    │   DiF agreement                   │
-                    └──────────────┬───────────────────┘
-                                   │
-                    ┌──────────────▼───────────────────┐
-                    │   HUMAN GATE + GAP LIST           │
-                    │   Machine-readable Gödel register │
-                    └──────────────────────────────────┘
+Agent Action → Halt Gate (Lean 4 predicate) → Colony Review (7 agents) → Receipt (SHA-256) → Ledger
 ```
 
-**Vassilev's three prescriptions → ProofOS instantiations:**
+---
 
-| Vassilev Says You Need | ProofOS Provides |
-|------------------------|------------------|
-| Continuous monitoring + update cycle | Receipt chain + PR-gated counsel review |
-| Proactive red-teaming | Byzantine + SIFT agents as standing capability |
-| Resilience mechanisms | Constitutional halt + Human Gate + gap list |
-
-## The Open-Obligation Surface
-
-Most AI safety vendors report a confidence percentage. **We publish the gap list.**
-
-| Metric | Value |
-|--------|-------|
-| Active theorems | 1,252 (Lean 4.16.0, Mathlib pinned) |
-| Proof density | 96.02% |
-| Open obligations | 104 across 32 files |
-| Discharged | ~91% |
-| Corpus files | 343 |
-
-The 9% that remains unproven is not a weakness. It is a **machine-readable Gödel register** — the exact set of propositions the formal system cannot currently discharge. Every gap is named, categorized, receipt-stamped, and auditable. An auditor reads the gap list, not a confidence number.
-
-## What's Proved
-
-| Theorem | File | Status |
-|---------|------|--------|
-| `haltSoundness` | `Aevion/Consensus/LeishmanBerger.lean` | PROVED (0 sorry) |
-| `barabanov_norm_implies_GAS` | `Aevion/Dynamics/BarabanovStability.lean` | PROVED (0 sorry) |
-| `byzantine_safe` | `Aevion/AuthorityCalculus/ByzantineGovernance.lean` | PROVED (0 sorry, 7 theorems) |
-| `interaction_bounded` | `Aevion/Compliance/DrugInteraction.lean` | PROVED |
-| `barrierInvariance` | `Aevion/BarrierInvariance.lean` | PROVED (0 sorry) |
-| `etaRecurrenceFinite` | `Aevion/NumberTheory/RHAudit/EtaRecurrence.lean` | PROVED (4 sorries closed) |
-
-## Agent Counsel Colony (live eval, June 9 2026)
-
-150-case stratified evaluation across 5 categories:
-
-| Agent | TTS | Status | Role |
-|-------|-----|--------|------|
-| DeterministicCounsel | 0.850 | HEALTHY | Rule-based safety floor |
-| ByzantineCounsel | 0.429 | HEALTHY | Adversarial red-team (SIFT pre-filtered) |
-| DiFCounsel | 0.950 | HEALTHY | Pure function, cannot hallucinate |
-| SIFTCounsel | 0.880 | HEALTHY | Decorative reasoning filter |
-| StochasticCounsel | 0.120 | DRIFTING | Exploration (pre-training) |
-| NonDeterministicCounsel | 0.120 | DRIFTING | Unknown-unknown discovery |
-
-**Council metrics:** 88% auto-pass | 12% gate escalation | 4.0% Byzantine veto | 82% DiF agreement
-
-## Enterprise Use Cases
-
-- **Agent Governance:** Any enterprise deploying agent swarms needs a governance layer. ProofOS is that layer.
-- **Supply Chain Verification:** AI-BOM (NIST SP 800-218A aligned) generated from ProofDB.
-- **Regulated Industry:** Proof-native audit trails for financial services, healthcare, defense.
-
-## Competitive Positioning
-
-| Competitor | What They Do | What They Don't Do |
-|-----------|-------------|-------------------|
-| **Anthropic** | Sells tokens | Doesn't prove what tokens did |
-| **K2.6 (Moonshot)** | 1,000-agent swarms | Zero formal verification, principles-only governance |
-| **Microsoft** | Agent governance toolkit (YAML/OPA) | No formal verification, no crypto receipts |
-
-**Aevion's position:** The trust layer BENEATH all of them. Not competing on features. Competing on provability.
-
-## What We Do NOT Claim
-
-- NOT "fully verified" / "0 sorries." 104 obligations are open.
-- NOT any regulatory certification (FAA/NIST/FIPS/CMVP/FedRAMP).
-- NOT that the architecture defeats Vassilev's Theorem II.1. It accepts it as ground truth.
-- NOT a behavioral-safety guarantee for arbitrary model outputs.
-- NOT that the sorry corpus will ever reach zero — a Godelian system cannot close all its own obligations.
-
-## How to Verify
-
-Every claim in this document traces to a public artifact:
+## Quick start
 
 ```bash
-# Theorem/sorry counts
-lake build Aevion && tools/lean_stats.py
-
-# Colony eval
+git clone https://github.com/Aevion-ai/ProofOS
+cd ProofOS
+pip install -r requirements.txt
 pytest tests/ -q
-
-# Model access envelope
-pytest tests/test_model_access_envelope.py -v
 ```
+
+Expected output:
+```
+tests/test_model_access_envelope.py .................... [100%]
+20 passed in 0.71s
+```
+
+---
+
+## What's inside
+
+| Component | Description | Link |
+|-----------|-------------|------|
+| Constitutional Halt Gate | Lean 4 predicates block unsafe state transitions | [LeishmanBerger.lean](lean/LeishmanBerger.lean) |
+| Receipt Chain | SHA-256 content-addressed, canonical JSON, append-only | [architecture.md](architecture.md) |
+| Agent Counsel Colony | N-agent review council with Byzantine fault detection and SIFT filtering | [quorum.md](quorum.md) |
+| Capability Access Separation | Access envelopes PUBLIC → HUMAN\_ONLY, Lean-proven (3 theorems) | [CapabilityAccessSeparation.lean](lean/CapabilityAccessSeparation.lean) |
+| ModelAccessEnvelope | Runtime access control for frontier models | [model_access_envelope.py](src/aevion_runtime/model_access_envelope.py) |
+| Open-Obligation Surface | 104 named, categorized, receipt-stamped obligations | [lean/](lean/) |
+
+## Architecture
+
+The architecture instantiates three prescriptions from a 2026 NIST proof (Vassilev, IEEE S&P, DOI: `10.1109/MSEC.2026.3678214`) that established no finite guardrail set is universally robust:
+
+| Principle | Implementation |
+|-----------|---------------|
+| Continuous monitoring | Receipt chain — every decision emits an auditable record |
+| Proactive red-teaming | Agent Counsel Colony — Byzantine + SIFT agents as standing capability |
+| Operational resilience | Constitutional halt gate + Human Gate escalation |
+
+The full architecture diagram and walkthrough are in [architecture.md](architecture.md).
+
+## Agent Counsel Colony
+
+Seven agents review every change before it's committed. A Quorum Constitution ([quorum.md](quorum.md)) defines how their votes aggregate.
+
+| Agent | Role | Status |
+|-------|------|--------|
+| DeterministicCounsel | Rule-based safety floor (TTS 0.850) | Healthy |
+| ByzantineCounsel | Adversarial red-team with SIFT pre-filter (TTS 0.429) | Healthy |
+| DiFCounsel | Pure deterministic function — cannot hallucinate (TTS 0.950) | Healthy |
+| SIFTCounsel | Strips decorative reasoning from other agents (TTS 0.880) | Healthy |
+| StochasticCounsel | Probability distribution estimator (TTS 0.120) | Pre-training |
+| NonDeterministicCounsel | Edge case explorer (TTS 0.120) | Pre-training |
+| CounselArbiter | Synthesizes verdicts, applies Quorum Constitution | — |
+
+Evaluated on 150 stratified cases: 88% auto-pass, 4.0% Byzantine veto, 82% DiF agreement.
+
+## Proven theorems
+
+| Theorem | Status |
+|---------|--------|
+| `haltSoundness` | Proved (0 sorry) |
+| `barrierInvariance` | Proved (0 sorry) |
+| `byzantineGovernance` | Proved (7 theorems, 0 sorry) |
+| `barabanov_norm_implies_GAS` | Proved (0 sorry) |
+| `interaction_bounded` | Proved |
+| `etaRecurrenceFinite` | Proved (4 sorries closed) |
+| `accessTier_le_trans` | Proved (0 sorry) |
 
 ## Paper
 
-[Proof-Native Constitutional Harnesses v1.0](papers/proof_native_constitutional_harness_v1.0.md)
+[Proof-Native Constitutional Harnesses: An Architecture with a Published Open-Obligation Surface](paper.md)
 
-Primary citation: Vassilev, A. "Robust AI Security and Alignment: A Sisyphean Endeavor?" *IEEE Security & Privacy*, May 2026. DOI: `10.1109/MSEC.2026.3678214`.
+## License
+
+Apache 2.0
 
 ---
 
-**Aevion LLC** — [aevion.ai](https://aevion.ai)
+[Aevion LLC](https://aevion.ai) — SDVOSB — NIST AI Consortium applicant
