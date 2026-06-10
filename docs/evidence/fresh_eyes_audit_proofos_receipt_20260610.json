@@ -1,0 +1,132 @@
+{
+  "receipt_type": "fresh_eyes_audit",
+  "classification": "INTERNAL_ONLY",
+  "authority_lane": "OWNER_REVIEW_QUEUE",
+  "contains_red_items": true,
+  "generated_at": "2026-06-10T00:00:00Z",
+  "repo_under_audit": "Aevion-ai/ProofOS",
+  "branch": "claude/funny-goldberg-vqc095",
+  "refs": {
+    "head_audited": "11b7faa",
+    "main": "5eb2579",
+    "tag_v1_0_0": "efc9123"
+  },
+  "method": "Fresh-eyes audit method per Aevion-Verifiable-AI PR #144 (docs/reports/fresh_eyes_audit_four_repo_20260609.md), applied to the fifth repo (previously out of scope). Confirms and extends PR #144 section 11 open hypothesis.",
+  "artifacts": {
+    "report": {
+      "path": "docs/evidence/fresh_eyes_audit_proofos_20260610.md",
+      "sha256": "923a17d990141bdbe28cc0a5811e0aaf9b36f628e218e04d38b05af719331acc",
+      "note": "Published REDACTED copy (key locators in P4 withheld)."
+    },
+    "report_unredacted_full": {
+      "delivered": "out-of-band to owner (RED security finding)",
+      "sha256": "12410cb3293f9be1e16d128115e0bd3bef902a8109a6c66b1114f9801ca03ccd"
+    },
+    "receipt": {
+      "path": "docs/evidence/fresh_eyes_audit_proofos_receipt_20260610.json",
+      "sha256": "SELF"
+    }
+  },
+  "in_repo_lean_inventory": {
+    "lean_files": 2,
+    "theorem_declarations": 6,
+    "substantive_proofs": 4,
+    "true_trivialized_stubs": 1,
+    "live_sorries": 1,
+    "files": [
+      {"path": "lean/LeishmanBerger.lean", "loc": 21, "state": "haltSoundness proved by omega, 0 sorry"},
+      {"path": "lean/CapabilityAccessSeparation.lean", "loc": 131, "state": "accessTier_le_trans/humanOnly_is_top/public_is_bottom proved; envelope_composition_monotonic := True (trivialized); fallback_preserves_safety sorry"}
+    ]
+  },
+  "advertised_vs_actual": {
+    "advertised_theorems": [1252, 1203],
+    "advertised_files": 343,
+    "advertised_density": ["96%", "96.02%", "~91% discharged"],
+    "advertised_open_obligations": 104,
+    "advertised_open_files": 32,
+    "actual_theorems": 6,
+    "actual_files": 2,
+    "theorem_gap_factor": "~209x",
+    "file_gap_factor": "~171x",
+    "fossil_source": "aevion-shield lean_stats.py: sorry_word_in_code=104, sorry_file_count_proof=32 (verbatim match to advertised 104/32)"
+  },
+  "readme_proven_theorems_table_presence_check": {
+    "in_repo": ["haltSoundness", "accessTier_le_trans"],
+    "absent_from_repo": ["barrierInvariance", "byzantineGovernance", "barabanov_norm_implies_GAS", "interaction_bounded", "etaRecurrenceFinite"],
+    "byzantineGovernance_actual_location": "Aevion-Verifiable-AI/lean-proofs/Aevion/AuthorityCalculus/ByzantineGovernance.lean",
+    "barabanov_actual_location": "aevion-shield/Aristotle/extracted/.../Safety/BarabanovStability.lean"
+  },
+  "public_site": {
+    "cname": "aevion.ai",
+    "source": "docs/index.html + docs/assets/index-*.js",
+    "strings_quoted_as_data": [
+      "1,252 theorems at 96% density",
+      "104 open obligations",
+      "343 files",
+      "NIST published the proof. Anthropic shipped the architecture. We built the receipted governance for Frontier AI",
+      "Quantum Witness ... Wukong Bell + QGOV Predict tiles",
+      "NIST AI Consortium applicant"
+    ],
+    "ci_enforces_inflated_number": "e2e/smoke.spec.ts:17,28 asserts literal '1,252' visible",
+    "governance_conflict": "QGOV/Wukong named on public site vs Aevion-Verifiable-AI/.claude/rules/quantum-claims.md PUBLIC_RELEASE: HELD"
+  },
+  "external_citation_status": {
+    "doi": "10.1109/MSEC.2026.3678214",
+    "claimed_publication": "2026-06-09",
+    "verification": "UNVERIFIED — no general web egress from container; aevion.ai returns HTTP 403 to fetch tool. Not asserted true or false.",
+    "red_gate": "paper.md marked INTERNAL DRAFT NOT FOR SUBMISSION, arXiv RED; yet NIST framing is live on public site without the required owner approval."
+  },
+  "new_red_finding_other_repo": {
+    "id": "P4",
+    "repo": "aevion-shield",
+    "file": "certificates/[REDACTED — owner-only; delivered out-of-band]",
+    "introduced_commit": "[REDACTED]",
+    "gitignored": false,
+    "algorithm": "ML-DSA-65",
+    "secret_key_hex_bytes": 4032,
+    "public_key_hex_bytes": 1952,
+    "key_id": "[REDACTED]",
+    "placeholder_check": "16 distinct hex symbols, max single-symbol frequency 8.9% — genuine high-entropy key material, not a zero-fill stub",
+    "finding": "Committed ML-DSA-65 private signing key (the certificate scheme behind Aevion's proof-certificate/receipt story). Compromised by definition; grants forgery capability under the affected key_id. Exact path/commit/key_id withheld from this published copy; delivered out-of-band to owner.",
+    "remediation_lane": "CLEARANCE_REQUIRED (RED) — rotate, re-issue, scrub history, gitignore; NO autonomous action taken",
+    "violates": "CLAUDE.md hard-prohibition: add secrets"
+  },
+  "commands_run": [
+    "git -C ProofOS log/branch/ls-remote (refs, tags, default branch)",
+    "rg/wc over ProofOS/lean (inventory)",
+    "pytest tests/ -> 20 passed",
+    "grep -oE over docs/assets/index-*.js + docs/index.html (public claim strings)",
+    "python3 length+entropy inspection of aevion-shield mldsa key file",
+    "git check-ignore <redacted key file> -> NOT IGNORED",
+    "sha256sum report"
+  ],
+  "tests": {
+    "proofos_pytest": "20 passed",
+    "lean_build": "SKIPPED(env) — elan release channel unreachable (same env limit as PR #144); static inventory used"
+  },
+  "proof_status": {
+    "proved_by_this_audit": 0,
+    "sorry_delta": 0,
+    "axiom_delta": 0
+  },
+  "severity_summary": {
+    "S1": ["P1 corpus absent", "P2 fossilized cross-repo metric", "P3 phantom README theorem table", "P4 committed private key"],
+    "S2": ["P5 CI enforces inflated number", "P6 RED NIST framing public", "P7 quantum tiles public", "P8 internal metric contradiction", "P9 sole safety obligation is True-stub+sorry"],
+    "S3": ["P10 architecture.md external-comms label on RED framing", "P11 colony.py/eval harness referenced but absent"]
+  },
+  "next_tasks": [
+    "Owner decision: replace 1252/343/104 with this repo's own lean_stats; fix Playwright assertion (YELLOW)",
+    "P4 secret-key rotation + history scrub in aevion-shield (RED, owner)",
+    "CI gate: fail when a prose metric diverges from a live lean_stats scan of the shipping repo"
+  ],
+  "claim_hygiene": {
+    "novelty_claims": 0,
+    "superiority_claims": 0,
+    "quoted_overclaims_tag": "QUOTED_AS_DATA",
+    "doi_handling": "marked UNVERIFIED, not asserted fabricated",
+    "pre_commit_revisions": 2,
+    "revisions": ["'fabricated numbers' -> 'advertised numbers'", "'fabricated metric' -> 'inflated metric'"]
+  },
+  "human_gate": "OWNER_REVIEW_QUEUE",
+  "merge_requirement": "appr_scott_007 — draft PR only"
+}
