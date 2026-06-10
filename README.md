@@ -1,5 +1,10 @@
 # ProofOS
 
+[![Version](https://img.shields.io/badge/version-v1.0.0-teal)](https://github.com/Aevion-ai/ProofOS/releases/tag/v1.0.0)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
+[![Lean 4](https://img.shields.io/badge/Lean-4.16.0-7B2D8B)](lean/)
+[![CI](https://github.com/Aevion-ai/ProofOS/actions/workflows/ci.yml/badge.svg)](https://github.com/Aevion-ai/ProofOS/actions)
+
 **Receipt chain for Lean 4 proof obligations.** Every agent decision generates a cryptographically chained, machine-checkable artifact. 1,252 theorems at 96% density across 343 files.
 
 ---
