@@ -16,7 +16,7 @@ jobs:
           python-version: '3.12'
           cache: 'pip'
       - run: pip install -r requirements.txt 2>/dev/null || pip install pytest pydantic
-      - run: pytest tests/ -q
+      - run: PYTHONPATH=. pytest tests/ -q
 
   playwright:
     runs-on: ubuntu-latest
