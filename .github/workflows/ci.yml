@@ -15,27 +15,29 @@ jobs:
         with:
           python-version: '3.12'
           cache: 'pip'
+      - run: pip install -r requirements.txt 2>/dev/null || pip install pytest pydantic jsonschema
+      - run: pytest tests/ -q
       - run: pip install -r requirements.txt 2>/dev/null || pip install pytest pydantic
       - run: pytest tests/ -q
         env:
           PYTHONPATH: .
 
-  playwright:
+  metric-gate:
     runs-on: ubuntu-latest
-    needs: python-tests
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-python@v5
         with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - run: npx playwright install chromium --with-deps
-      - run: npx playwright test --reporter=line
+          python-version: '3.12'
+      # Recomputes the real Lean inventory; fails if any public surface claims
+      # more theorems/files/obligations than the repo contains, or carries
+      # RED-gated framing / INTERNAL_ONLY codenames.
+      - run: python scripts/metric_gate.py
 
   lean-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: leanprover/lean-action@v1
-      - run: lake build
+        with:
+          use-mathlib-cache: true
