@@ -29,7 +29,6 @@ test('aevion.ai renders correctly', async ({ page }) => {
 
   // Navigate to Platform Products tab
   await page.getByText('Platform Products').click();
-  await page.waitForTimeout(500);
 
   // Verify product cards are visible (use exact to avoid strict mode on summary text)
   await expect(page.getByText('Constitutional Halt Gate', { exact: true })).toBeVisible({ timeout: 5000 });

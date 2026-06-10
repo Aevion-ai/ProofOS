@@ -35,6 +35,7 @@ DENYLIST = [
 
 
 def lean_inventory() -> dict:
+    """Recompute theorem/sorry counts from the Lean sources in lean/."""
     lean_dir = ROOT / "lean"
     files = sorted(lean_dir.glob("*.lean"))
     theorems = sorries = 0
