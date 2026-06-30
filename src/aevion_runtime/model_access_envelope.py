@@ -1,4 +1,5 @@
-"""Model Access Envelope — CapabilityAccessSeparationLemma runtime.
+"""
+Model Access Envelope — CapabilityAccessSeparationLemma runtime.
 
 Aevion does not need to own the frontier model. Aevion owns the access envelope
 around frontier capability.
@@ -58,7 +59,9 @@ class SafeguardMode(str, Enum):
 
 @dataclass(frozen=True)
 class ModelAccessEnvelope:
-    """Access envelope around a frontier model capability.
+
+    """
+    Access envelope around a frontier model capability.
 
     The envelope, not the model, determines deployment safety.
     This is the CapabilityAccessSeparationLemma in code form:
@@ -115,7 +118,8 @@ class ModelAccessEnvelope:
             raise ValueError("DUAL_USE_CRITICAL requires retention >= 30 days")
 
     def is_safe_deployable(self) -> bool:
-        """A deployment is safe IFF the envelope, not the model, guarantees it.
+        """
+        A deployment is safe IFF the envelope, not the model, guarantees it.
 
         Theorem (deployment_safety_not_model_intrinsic):
           SafeDeployable(M, E) ↔
@@ -132,7 +136,8 @@ class ModelAccessEnvelope:
         )
 
     def can_serve(self, requested_tier: AccessTier) -> bool:
-        """Check if this envelope can serve a request at the given tier.
+        """
+        Check if this envelope can serve a request at the given tier.
 
         More restrictive envelopes can serve less restrictive requests.
         """

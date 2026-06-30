@@ -1,7 +1,8 @@
 ---
 # Codacy configuration for ProofOS.
-# Excludes generated assets and CI-only files that are not representative of
-# maintainable source code. Tool-specific overrides live in their own configs.
+# Excludes generated assets, test code, and CI-only files that are not
+# representative of maintainable production code. Tool-specific overrides live
+# in their own configs.
 engines:
   bandit:
     enabled: true
@@ -17,6 +18,7 @@ engines:
     enabled: true
 exclude_paths:
   - "docs/assets/**"
+  - "tests/**"
   - "*.min.css"
   - "*.min.js"
   - "package-lock.json"

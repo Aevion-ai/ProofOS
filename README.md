@@ -19,7 +19,6 @@ mirrored. See the manifest for the current sync status and path map.
 
 ## What it does
 
-
 ProofOS wraps AI agent decisions in a constitutional halt gate backed by Lean 4 proofs. When an agent proposes an action, the system checks it against declared safety predicates. If the check passes, a SHA-256 receipt is emitted. If it fails, the action is blocked. Every receipt is content-addressed, append-only, and independently verifiable.
 
 The design follows a published impossibility result (Vassilev, *IEEE S&P*, 2026) that no finite guardrail set is universally robust, and implements the three architectural responses it motivates: continuous monitoring via receipt chains, proactive red-teaming via a multi-agent counsel colony, and operational resilience via constitutional halt gates and human-in-the-loop escalation. (This is convergence on a shared prescription, not an endorsement of ProofOS by NIST.)
