@@ -4,9 +4,9 @@ version = "1.0.0"
 description = "Proof-native governance for frontier AI — receipt chain for Lean 4 proof obligations"
 requires-python = ">=3.10"
 dependencies = [
-    "pytest>=8.0",
-    "pydantic>=2.0",
-    "jsonschema>=4.20",
+    "pytest==9.1.1",
+    "pydantic==2.13.4",
+    "jsonschema==4.26.0",
 ]
 
 [project.optional-dependencies]
@@ -18,3 +18,9 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = [".", "src"]
+
+[tool.pydocstyle]
+# ProofOS uses the standard Google/PEP-257 convention of a one-line summary on
+# the first line of a multi-line docstring, and no blank line between the class
+# header and its docstring.
+ignore = ["D203", "D213"]

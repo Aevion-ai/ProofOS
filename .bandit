@@ -1,6 +1,4 @@
 [bandit]
 # Asserts are idiomatic in pytest tests; exclude tests from B101 while keeping
 # production code (src/, scripts/) under analysis.
-exclude_dirs = tests
-skips =
-targets = src,scripts
+exclude = tests
