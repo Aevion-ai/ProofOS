@@ -108,7 +108,7 @@ The architecture is specified in the Quorum Constitution. Implementation and eva
 | `fallback_preserves_safety` | [CapabilityAccessSeparation.lean](lean/CapabilityAccessSeparation.lean) | Reducible sorry |
 | `haltSoundness` | [LeishmanBerger.lean](lean/LeishmanBerger.lean) | Proved |
 
-Note: the broader Lean 4 corpus is maintained privately in the Aevion-Verifiable-AI repository; its counts are not reproduced here to avoid publishing figures that cannot be checked from this repo. Contact scott@aevion.ai for access.
+Note: the broader Lean 4 corpus is maintained privately in the Aevion-Verifiable-AI repository; its counts are not reproduced here to avoid publishing figures that cannot be checked from this repo. Contact <scott@aevion.ai> for access.
 
 ## Paper
 

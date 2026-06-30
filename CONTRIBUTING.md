@@ -26,6 +26,7 @@ Thank you for your interest in contributing.
 ## Review Process
 
 All pull requests require review before merging. The CI pipeline runs:
+
 - Python tests (pytest)
 - Lean proof builds (lake)
 - Security guard scan

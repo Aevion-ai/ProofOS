@@ -160,6 +160,7 @@ Every agent MUST emit a named rule on every verdict. Silent votes are forbidden.
 ## 6. Eval Instrumentation Requirements
 
 Every council decision receipt MUST include:
+
 - `arbiter_rules`: list of ALL named rules fired (pass and dissent)
 - `vote_counts`: per-action counts with agent names
 - `quorum_analysis`: which §4 rule was applied
