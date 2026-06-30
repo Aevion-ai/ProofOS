@@ -42,8 +42,8 @@ src: lean/Aevion/SBIR -> lean/Aevion/SBIR
 
 | Field | Value |
 |-------|-------|
-| `source_commit` | `TBD` |
-| `last_sync` | `TBD` |
+| `source_commit` | `cce1f02b0755fe59144ada7e90986a22716c4a55` |
+| `last_sync` | `2026-06-30T17:49:25Z` |
 | `source_repo` | `Aevion-ai/Aevion-Verifiable-AI` |
 | `mirror_branch` | `main` |
 

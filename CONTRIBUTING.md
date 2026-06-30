@@ -1,35 +1,36 @@
-# Contributing to ProofOS
+# Contributing to Aevion-Verifiable-AI
 
-## Proof standards
+Thank you for your interest in contributing.
 
-- **No `sorry` in active safety corpus.** New theorems must be kernel-clean. Stubs belong in `research_scaffold/` with explicit documentation.
-- **Mathlib-first.** Prefer Mathlib imports over custom definitions. Pin versions in `lean-toolchain`.
-- **Canonical serialization.** All receipts use `canonical_sha256` from `core/python/proofdb/canonical.py`. No local reimplementations.
+## Getting Started
 
-## Issue workflow
+1. Fork the repository and create a feature branch from `main`.
+2. Install dependencies:
+   - **Python 3.11+** with `pytest` (`pip install pytest`)
+   - **Lean 4** via [elan](https://github.com/leanprover/elan) (version pinned in `lean-proofs/lean-toolchain`)
+   - **ripgrep** (`rg`) for proof hygiene scans
+3. Make your changes.
+4. Run tests before submitting:
+   ```bash
+   python3 -B -m pytest integrations/ tests/ -v
+   cd lean-proofs && lake build
+   ```
+5. Open a pull request against `main`.
 
-| Label | Meaning | Response |
-|-------|---------|----------|
-| `proof-debt:P0:critical` | Safety/governance invariant with no formal proof | Requires linked PR within 7 days |
-| `colony:eval` | Agent Counsel Colony evaluation or calibration | Standard triage |
-| `documentation` | Docs, README, architecture, paper | Standard triage |
-| `good-first-issue` | Scoped, self-contained, no deep domain knowledge needed | Encouraged for new contributors |
+## Code Standards
 
-## PR checklist
+- **Lean proofs:** No `sorry`, `admit`, or new project-defined `axiom` declarations. Prove only narrow decidable gates.
+- **Python:** Follow existing code style. All new modules should have corresponding tests.
+- **Claim hygiene:** Do not claim certification, guaranteed safety, or regulatory approval. Use maturity labels: `LOCAL_PROTOTYPE`, `CI_READY`, `ENTERPRISE_PILOT_READY`, `PRODUCTION_REQUIRES_REVIEW`.
 
-- [ ] `lake build` passes locally
-- [ ] `pytest tests/ -q` passes locally
-- [ ] Receipts emitted for substantive changes
-- [ ] No new `sorry`/`admit`/`axiom` in active safety corpus without explicit `STATEMENT_CHANGED` review
-- [ ] Architectural changes update `architecture.md` and Quorum Constitution if applicable
+## Review Process
 
-## Architecture
+All pull requests require review before merging. The CI pipeline runs:
+- Python tests (pytest)
+- Lean proof builds (lake)
+- Security guard scan
+- Schema validation
 
-Before contributing, read:
-- [architecture.md](architecture.md) — system diagram and layer mapping
-- [quorum.md](quorum.md) — Agent Counsel Colony aggregation rules
-- [paper.md](paper.md) — full technical paper
+## Reporting Issues
 
-## License
-
-By contributing, you agree that your contributions will be licensed under the Apache 2.0 License.
+Use GitHub Issues for bug reports and feature requests. For security issues, see [SECURITY.md](SECURITY.md).
