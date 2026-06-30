@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Structural metric-reconciliation gate for ProofOS public surfaces.
+"""
+Structural metric-reconciliation gate for ProofOS public surfaces.
 
 Why structural: a denylist of specific fossil numbers is too weak — the count
 has already mutated (1,252 -> 1,283; 343 -> 350 files) across sessions. This
