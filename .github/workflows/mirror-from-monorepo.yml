@@ -22,11 +22,13 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout canonical monorepo
+        # Deploy keys are disabled on the monorepo, so we use a PAT with
+        # contents:read (and metadata:read) scope for Aevion-ai/Aevion-Verifiable-AI.
         uses: actions/checkout@v4
         with:
           repository: Aevion-ai/Aevion-Verifiable-AI
           path: .monorepo
-          ssh-key: ${{ secrets.MONOREPO_MIRROR_DEPLOY_KEY }}
+          token: ${{ secrets.MONOREPO_MIRROR_TOKEN }}
           fetch-depth: 1
 
       - name: Sync allow-listed paths
