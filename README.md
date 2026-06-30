@@ -9,7 +9,16 @@
 
 ---
 
+## Public mirror
+
+ProofOS is the **governed public mirror** of the canonical Aevion monorepo,
+[Aevion-ai/Aevion-Verifiable-AI](https://github.com/Aevion-ai/Aevion-Verifiable-AI).
+Only the allow-listed paths in [MIRROR_MANIFEST.md](MIRROR_MANIFEST.md) are copied
+from the monorepo; secrets, credentials, and internal-only evidence are never
+mirrored. See the manifest for the current sync status and path map.
+
 ## What it does
+
 
 ProofOS wraps AI agent decisions in a constitutional halt gate backed by Lean 4 proofs. When an agent proposes an action, the system checks it against declared safety predicates. If the check passes, a SHA-256 receipt is emitted. If it fails, the action is blocked. Every receipt is content-addressed, append-only, and independently verifiable.
 
