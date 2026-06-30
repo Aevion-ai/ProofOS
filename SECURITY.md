@@ -10,10 +10,12 @@ We will acknowledge receipt within 48 hours and provide a timeline for resolutio
 
 ## Multirepo findings
 
-Org-wide Snyk items (Next.js EOL, `exec` in `agentic_reasoning_engine.py`, pickle in
-`optimized_semantic_similarity.py`, vetproof.ai CSP, Docker root user, etc.) are triaged in
-`docs/ops/security_remediation_queue_multirepo_v0.1.md`. Most Critical rows apply to **other**
-Aevion repositories, not this proof corpus.
+Org-wide Snyk items are triaged in
+`docs/ops/security_remediation_queue_multirepo_v0.1.md`. Examples include Next.js
+**EOL (End of Life)**, `exec` in `agentic_reasoning_engine.py`, pickle in
+`optimized_semantic_similarity.py`, vetproof.ai **CSP (Content Security Policy)**, and
+Docker root user. Most Critical rows apply to **other** Aevion repositories, not this
+proof corpus.
 
 ## Scope
 

@@ -1,0 +1,22 @@
+---
+# Codacy configuration for ProofOS.
+# Excludes generated assets and CI-only files that are not representative of
+# maintainable source code. Tool-specific overrides live in their own configs.
+engines:
+  bandit:
+    enabled: true
+  eslint:
+    enabled: true
+  stylelint:
+    enabled: true
+  remark-lint:
+    enabled: true
+  pylint:
+    enabled: true
+  pyright:
+    enabled: true
+exclude_paths:
+  - "docs/assets/**"
+  - "*.min.css"
+  - "*.min.js"
+  - "package-lock.json"

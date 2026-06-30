@@ -39,7 +39,7 @@ ProofOS aligns with NIST AI RMF 1.0 (AI 100-1) and the Secure Software Developme
 
 ## AI-BOM
 
-ProofOS generates NIST SP 800-218A compliant AI Bills of Materials. Contact scott@aevion.ai for access to the generator and sample output.
+ProofOS generates NIST SP 800-218A compliant AI Bills of Materials. Contact <scott@aevion.ai> for access to the generator and sample output.
 
 ## Primary citation
 

@@ -1,0 +1,5 @@
+[pydocstyle]
+# ProofOS uses the standard Google/PEP-257 convention of a one-line summary on
+# the first line of a multi-line docstring, and no blank line between the class
+# header and its docstring.
+ignore = D203,D213

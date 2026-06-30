@@ -12,7 +12,7 @@ This module provides the Python runtime for the ModelAccessEnvelope schema.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
@@ -29,7 +29,7 @@ class AccessTier(str, Enum):
     TRUSTED_ACCESS = "TRUSTED_ACCESS"
     HUMAN_ONLY = "HUMAN_ONLY"
 
-    def __ge__(self, other: AccessTier) -> bool:
+    def __ge__(self, other: AccessTier) -> bool:  # type: ignore[override]
         """Partial order: more restrictive >= less restrictive."""
         order = {
             AccessTier.PUBLIC: 0,
@@ -39,7 +39,8 @@ class AccessTier(str, Enum):
         }
         return order[self] >= order[other]
 
-    def __gt__(self, other: AccessTier) -> bool:
+    def __gt__(self, other: AccessTier) -> bool:  # type: ignore[override]
+        """Strict partial order: more restrictive > less restrictive."""
         order = {
             AccessTier.PUBLIC: 0,
             AccessTier.BUSINESS: 1,
@@ -76,32 +77,42 @@ class ModelAccessEnvelope:
     policy_version: str = "capability_access_v0.1"
 
     def __post_init__(self) -> None:
-        # Validation per schema constraints
-        if self.access_tier == AccessTier.PUBLIC:
-            if self.safeguard_mode != SafeguardMode.FULL:
-                raise ValueError("PUBLIC tier requires FULL safeguard mode")
-            if not self.fallback_model:
-                raise ValueError("PUBLIC tier requires a fallback_model")
+        """Validate envelope invariants after construction."""
+        self._validate_public_tier()
+        self._validate_human_only_tier()
+        self._validate_dual_use_critical()
 
-        if self.access_tier == AccessTier.HUMAN_ONLY:
-            if not self.human_gate_required:
-                raise ValueError("HUMAN_ONLY tier requires human_gate_required=True")
-            if not self.receipt_required:
-                raise ValueError("HUMAN_ONLY tier requires receipt_required=True")
+    def _validate_public_tier(self) -> None:
+        if self.access_tier != AccessTier.PUBLIC:
+            return
+        if self.safeguard_mode != SafeguardMode.FULL:
+            raise ValueError("PUBLIC tier requires FULL safeguard mode")
+        if not self.fallback_model:
+            raise ValueError("PUBLIC tier requires a fallback_model")
 
-        if self.capability_class == CapabilityClass.DUAL_USE_CRITICAL:
-            if self.access_tier not in (
-                AccessTier.TRUSTED_ACCESS,
-                AccessTier.HUMAN_ONLY,
-            ):
-                raise ValueError(
-                    f"DUAL_USE_CRITICAL requires TRUSTED_ACCESS or HUMAN_ONLY, "
-                    f"got {self.access_tier.value}"
-                )
-            if not self.human_gate_required:
-                raise ValueError("DUAL_USE_CRITICAL requires human_gate_required=True")
-            if self.retention_policy_days < 30:
-                raise ValueError("DUAL_USE_CRITICAL requires retention >= 30 days")
+    def _validate_human_only_tier(self) -> None:
+        if self.access_tier != AccessTier.HUMAN_ONLY:
+            return
+        if not self.human_gate_required:
+            raise ValueError("HUMAN_ONLY tier requires human_gate_required=True")
+        if not self.receipt_required:
+            raise ValueError("HUMAN_ONLY tier requires receipt_required=True")
+
+    def _validate_dual_use_critical(self) -> None:
+        if self.capability_class != CapabilityClass.DUAL_USE_CRITICAL:
+            return
+        if self.access_tier not in (
+            AccessTier.TRUSTED_ACCESS,
+            AccessTier.HUMAN_ONLY,
+        ):
+            raise ValueError(
+                f"DUAL_USE_CRITICAL requires TRUSTED_ACCESS or HUMAN_ONLY, "
+                f"got {self.access_tier.value}"
+            )
+        if not self.human_gate_required:
+            raise ValueError("DUAL_USE_CRITICAL requires human_gate_required=True")
+        if self.retention_policy_days < 30:
+            raise ValueError("DUAL_USE_CRITICAL requires retention >= 30 days")
 
     def is_safe_deployable(self) -> bool:
         """A deployment is safe IFF the envelope, not the model, guarantees it.

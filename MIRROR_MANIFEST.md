@@ -50,6 +50,7 @@ src: lean/Aevion/SBIR -> lean/Aevion/SBIR
 ## Expanding the manifest
 
 Additions require:
+
 - Confirmation that the source path contains no credentials or internal-only
   evidence.
 - A successful dry-run of the mirror workflow in a fork or branch.
