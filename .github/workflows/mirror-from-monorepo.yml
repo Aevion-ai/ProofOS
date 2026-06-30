@@ -1,0 +1,116 @@
+name: Mirror from Aevion-Verifiable-AI monorepo
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 0'  # Weekly, Sunday 06:00 UTC
+  repository_dispatch:
+    types: [monorepo-release]
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    name: Sync governed subset from monorepo
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ProofOS
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout canonical monorepo
+        uses: actions/checkout@v4
+        with:
+          repository: Aevion-ai/Aevion-Verifiable-AI
+          path: .monorepo
+          ssh-key: ${{ secrets.MONOREPO_MIRROR_DEPLOY_KEY }}
+          fetch-depth: 1
+
+      - name: Sync allow-listed paths
+        id: sync
+        run: |
+          set -euo pipefail
+          SOURCE_SHA=$(git -C .monorepo rev-parse HEAD)
+          LAST_SYNC=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+          echo "last_sync=$LAST_SYNC" >> "$GITHUB_OUTPUT"
+
+          while IFS= read -r line; do
+            line="${line#"${line%%[![:space:]]*}"}"
+            line="${line%"${line##*[![:space:]]}"}"
+            [[ "$line" =~ ^src:[[:space:]]*(.+)[[:space:]]*->[[:space:]]*(.+)$ ]] || continue
+            src="${BASH_REMATCH[1]}"
+            dst="${BASH_REMATCH[2]}"
+            src_path=".monorepo/$src"
+            if [[ ! -e "$src_path" ]]; then
+              echo "SKIP: source not found: $src"
+              continue
+            fi
+            echo "COPY: $src -> $dst"
+            rm -rf "$dst"
+            mkdir -p "$(dirname "$dst")"
+            cp -r "$src_path" "$dst"
+          done < MIRROR_MANIFEST.md
+
+          python3 - "$SOURCE_SHA" "$LAST_SYNC" <<'PY'
+          import os
+          import re
+          import sys
+          from pathlib import Path
+
+          sha, last_sync = sys.argv[1], sys.argv[2]
+          manifest = Path("MIRROR_MANIFEST.md")
+          text = manifest.read_text(encoding="utf-8")
+          text = re.sub(
+              r"^(\\| `source_commit` \\| `)[^`]*(` \\|)$",
+              rf"\\g<1>{sha}\\g<2>",
+              text,
+              flags=re.MULTILINE,
+          )
+          text = re.sub(
+              r"^(\\| `last_sync` \\| `)[^`]*(` \\|)$",
+              rf"\\g<1>{last_sync}\\g<2>",
+              text,
+              flags=re.MULTILINE,
+          )
+          manifest.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: |
+          pytest tests/ -q
+
+      - name: Configure git
+        run: |
+          git config user.name "Aevion Mirror Bot"
+          git config user.email "mirror@aevion.ai"
+
+      - name: Commit candidate and scan for secrets
+        run: |
+          set -euo pipefail
+          git add -A
+          if git diff --cached --quiet; then
+            echo "NO_CHANGES=true" >> "$GITHUB_ENV"
+            echo "No changes to mirror."
+            exit 0
+          fi
+          git commit -m "mirror: sync from Aevion-Verifiable-AI (${SOURCE_SHA})"
+          docker run --rm -v "$PWD":/tmp -w /tmp \
+            ghcr.io/trufflesecurity/trufflehog:latest \
+            git file:///tmp/ --since-commit HEAD~1 --branch HEAD --only-verified --fail --no-update
+        env:
+          SOURCE_SHA: ${{ steps.sync.outputs.source_sha }}
+
+      - name: Push to main
+        if: env.NO_CHANGES != 'true'
+        run: |
+          git push origin main
