@@ -34,47 +34,54 @@ jobs:
       - name: Sync allow-listed paths
         id: sync
         run: |
-          set -euo pipefail
-          SOURCE_SHA=$(git -C .monorepo rev-parse HEAD)
-          LAST_SYNC=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
-          echo "last_sync=$LAST_SYNC" >> "$GITHUB_OUTPUT"
-
-          while IFS= read -r line; do
-            line="${line#"${line%%[![:space:]]*}"}"
-            line="${line%"${line##*[![:space:]]}"}"
-            [[ "$line" =~ ^src:[[:space:]]*(.+)[[:space:]]*->[[:space:]]*(.+)$ ]] || continue
-            src="${BASH_REMATCH[1]}"
-            dst="${BASH_REMATCH[2]}"
-            src_path=".monorepo/$src"
-            if [[ ! -e "$src_path" ]]; then
-              echo "SKIP: source not found: $src"
-              continue
-            fi
-            echo "COPY: $src -> $dst"
-            rm -rf "$dst"
-            mkdir -p "$(dirname "$dst")"
-            cp -r "$src_path" "$dst"
-          done < MIRROR_MANIFEST.md
-
-          python3 - "$SOURCE_SHA" "$LAST_SYNC" <<'PY'
+          python3 - <<'PY'
+          import datetime as dt
           import os
           import re
-          import sys
+          import shutil
+          import subprocess
           from pathlib import Path
 
-          sha, last_sync = sys.argv[1], sys.argv[2]
+          source_sha = subprocess.check_output(
+              ["git", "-C", ".monorepo", "rev-parse", "HEAD"], text=True
+          ).strip()
+          last_sync = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"source_sha={source_sha}\n")
+              f.write(f"last_sync={last_sync}\n")
+
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
+
+          for line in text.splitlines():
+              m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
+              if not m:
+                  continue
+              src, dst = m.group(1), m.group(2)
+              src_path = Path(".monorepo") / src
+              if not src_path.exists():
+                  print(f"SKIP: source not found: {src}")
+                  continue
+              dst_path = Path(dst)
+              print(f"COPY: {src} -> {dst}")
+              if dst_path.exists():
+                  shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
+              dst_path.parent.mkdir(parents=True, exist_ok=True)
+              if src_path.is_dir():
+                  shutil.copytree(src_path, dst_path)
+              else:
+                  shutil.copy2(src_path, dst_path)
+
           text = re.sub(
-              r"^(\\| `source_commit` \\| `)[^`]*(` \\|)$",
-              rf"\\g<1>{sha}\\g<2>",
+              r"^(\| `source_commit` \| `)[^`]*(` \|)$",
+              rf"\g<1>{source_sha}\g<2>",
               text,
               flags=re.MULTILINE,
           )
           text = re.sub(
-              r"^(\\| `last_sync` \\| `)[^`]*(` \\|)$",
-              rf"\\g<1>{last_sync}\\g<2>",
+              r"^(\| `last_sync` \| `)[^`]*(` \|)$",
+              rf"\g<1>{last_sync}\g<2>",
               text,
               flags=re.MULTILINE,
           )
