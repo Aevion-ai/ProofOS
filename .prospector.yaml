@@ -1,0 +1,9 @@
+# Prospector configuration for ProofOS.
+# Pydocstyle rules D203/D211/D213 conflict with each other and with the
+# project's existing docstring style. Disable them rather than reformatting
+# every module.
+pydocstyle:
+  disable:
+    - D203
+    - D211
+    - D213
