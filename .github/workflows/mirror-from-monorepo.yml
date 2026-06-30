@@ -10,10 +10,20 @@ on:
 permissions:
   contents: write
 
+# Only one mirror run at a time; cancel an in-progress run if a newer trigger
+# arrives. Keeps Actions minutes predictable and avoids duplicate commits.
+concurrency:
+  group: mirror-from-monorepo
+  cancel-in-progress: true
+
 jobs:
   mirror:
     name: Sync governed subset from monorepo
     runs-on: ubuntu-latest
+    # Prevent accidental runs on forks; this repo only makes sense in the
+    # Aevion-ai org.
+    if: github.repository == 'Aevion-ai/ProofOS'
+    timeout-minutes: 30
     steps:
       - name: Checkout ProofOS
         uses: actions/checkout@v4
