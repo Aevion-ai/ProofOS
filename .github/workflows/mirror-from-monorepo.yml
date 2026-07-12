@@ -69,6 +69,12 @@ jobs:
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
+
+              # Prevent path traversal
+              if any(p in ("..", ".git") for p in Path(src).parts + Path(dst).parts) or Path(src).is_absolute() or Path(dst).is_absolute():
+                  print(f"SKIP: illegal path detected in '{src} -> {dst}'")
+                  continue
+
               src_path = Path(".monorepo") / src
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
