@@ -64,16 +64,32 @@ jobs:
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
 
+          cwd = Path.cwd().resolve()
+          monorepo_dir = (cwd / ".monorepo").resolve()
+
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+
+              # Resolve and check bounds to prevent path traversal
+              src_path = (Path(".monorepo") / src).resolve()
+              if not src_path.is_relative_to(monorepo_dir):
+                  print(f"SKIP (SECURITY): source path {src_path} is outside .monorepo")
+                  continue
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+
+              dst_path = Path(dst).resolve()
+              if not dst_path.is_relative_to(cwd):
+                  print(f"SKIP (SECURITY): destination path {dst_path} is outside repo root")
+                  continue
+              if dst_path.is_relative_to(monorepo_dir):
+                  print(f"SKIP (SECURITY): destination path {dst_path} overwrites .monorepo")
+                  continue
+
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
