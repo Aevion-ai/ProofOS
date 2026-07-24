@@ -1,3 +1,0 @@
-[submodule ".monorepo"]
-	path = .monorepo
-	url = https://github.com/Aevion-ai/Aevion-Verifiable-AI.git
