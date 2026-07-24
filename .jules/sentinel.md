@@ -1,0 +1,4 @@
+## 2024-07-24 - Path Traversal in Python pathlib via Manifest Configuration
+**Vulnerability:** A script processing `MIRROR_MANIFEST.md` used `Path(".monorepo") / src` to read source files and `Path(dst)` to write them, enabling a malicious PR to define absolute paths (e.g., `/etc/passwd`) or relative paths (e.g., `../../`) that traversed outside the intended base directories.
+**Learning:** Python's `pathlib.Path` behaves dangerously with the `/` operator: concatenating an absolute path string to a base `Path` object completely overrides the base path, yielding the absolute path (e.g., `Path("base") / "/abs"` equals `Path("/abs")`).
+**Prevention:** Always use `.resolve()` and validate the resulting path against the intended base directory using `.is_relative_to(base.resolve())` before performing any file operations. Do not blindly trust paths specified in manifest files.
