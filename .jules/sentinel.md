@@ -1,0 +1,4 @@
+## 2026-06-30 - Fix Path Traversal in Mirror Workflow
+**Vulnerability:** The GitHub Actions workflow `.github/workflows/mirror-from-monorepo.yml` constructed file paths from an untrusted manifest (`MIRROR_MANIFEST.md`) by joining `Path(".monorepo") / src`. Without proper resolution and bounds checking, absolute paths in `src` would bypass `.monorepo`, and `dst` paths could be manipulated to overwrite arbitrary files outside the workspace.
+**Learning:** Python's `pathlib.Path` division operator (`/`) respects absolute paths on the right side. `Path("base") / "/abs"` evaluates to `Path("/abs")`, allowing immediate path traversal even without `..` notation.
+**Prevention:** Always use `.resolve().is_relative_to(base_path.resolve())` to validate paths constructed from external input before any file system operations occur.
