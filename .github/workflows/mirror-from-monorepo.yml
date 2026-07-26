@@ -64,16 +64,47 @@ jobs:
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
 
+          monorepo_base = Path(".monorepo").resolve()
+          workspace_base = Path.cwd().resolve()
+
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+
+              # Construct and validate source path against path traversal
+              try:
+                  src_path = (Path(".monorepo") / src).resolve()
+              except ValueError:
+                  print(f"SKIP (Invalid path): {src}")
+                  continue
+
+              if not src_path.is_relative_to(monorepo_base):
+                  print(f"SKIP (Path traversal prevented): {src}")
+                  continue
+
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+
+              # Construct and validate destination path against path traversal
+              try:
+                  dst_path = Path(dst).resolve()
+              except ValueError:
+                  print(f"SKIP (Invalid dest path): {dst}")
+                  continue
+
+              if not dst_path.is_relative_to(workspace_base):
+                  print(f"SKIP (Dest path traversal prevented): {dst}")
+                  continue
+
+              # Protect essential directories
+              if dst_path.is_relative_to(workspace_base / ".git") or \
+                 dst_path.is_relative_to(monorepo_base):
+                  print(f"SKIP (Protected dest path): {dst}")
+                  continue
+
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
