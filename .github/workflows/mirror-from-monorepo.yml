@@ -64,16 +64,33 @@ jobs:
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
 
+          monorepo_base = Path(".monorepo").resolve()
+          repo_base = Path.cwd().resolve()
+
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+
+              # Strip leading slashes to prevent absolute path evaluation bypassing base
+              src_clean = src.lstrip("/")
+              dst_clean = dst.lstrip("/")
+
+              src_path = (monorepo_base / src_clean).resolve()
+              dst_path = (repo_base / dst_clean).resolve()
+
+              if not src_path.is_relative_to(monorepo_base):
+                  print(f"ERROR: source path {src} escapes monorepo directory")
+                  os._exit(1)
+              if not dst_path.is_relative_to(repo_base) or dst_path.is_relative_to(monorepo_base) or dst_path.is_relative_to(repo_base / ".git") or dst_path.is_relative_to(repo_base / ".github"):
+                  # Also block writing to .monorepo, .git, and .github from the mirror manifest for safety
+                  print(f"ERROR: destination path {dst} is invalid or escapes repository root")
+                  os._exit(1)
+
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
