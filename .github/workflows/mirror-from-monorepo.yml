@@ -64,16 +64,28 @@ jobs:
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
 
+          base_src = Path(".monorepo").resolve()
+          base_dst = Path(".").resolve()
+
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+
+              # 🛡️ Sentinel: Prevent path traversal vulnerabilities by ensuring
+              # paths remain within the intended base directories.
+              src_path = (Path(".monorepo") / src).resolve()
+              if not src_path.is_relative_to(base_src):
+                  raise ValueError(f"Path traversal detected in src: {src}")
+
+              dst_path = Path(dst).resolve()
+              if not dst_path.is_relative_to(base_dst):
+                  raise ValueError(f"Path traversal detected in dst: {dst}")
+
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
