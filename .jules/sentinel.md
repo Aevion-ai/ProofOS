@@ -1,0 +1,4 @@
+## 2026-07-29 - [CRITICAL] Path Traversal in Mirror Workflow
+**Vulnerability:** The automated mirror workflow (`.github/workflows/mirror-from-monorepo.yml`) constructs Python paths by concatenating untrusted base strings from `MIRROR_MANIFEST.md` using the `/` operator (e.g., `src_path = Path(".monorepo") / src`). A malicious or erroneous manifest entry (like `src: /etc/passwd` or `dst: ../../secrets`) could bypass intended directories, allowing arbitrary file read/write since `Path(base) / '/abs'` evaluates to the absolute path itself.
+**Learning:** Python's `pathlib.Path` concatenation exhibits unexpected behavior when the right-hand operand is an absolute path string; it discards the left-hand base path entirely.
+**Prevention:** Always use `.resolve()` to normalize constructed paths and enforce directory boundaries using `.is_relative_to()` against the intended, resolved base directory before performing any file operations based on untrusted input.
