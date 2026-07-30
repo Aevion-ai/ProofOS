@@ -64,16 +64,30 @@ jobs:
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
 
+          base_src = Path(".monorepo").resolve()
+          base_dst = Path(".").resolve()
+
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+
+              # Prevent path traversal
+              src_path = (Path(".monorepo") / src).resolve()
+              if not src_path.is_relative_to(base_src):
+                  print(f"SKIP: invalid source path (traversal): {src}")
+                  continue
+
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+
+              dst_path = (Path(".") / dst).resolve()
+              if not dst_path.is_relative_to(base_dst) or dst_path == base_dst:
+                  print(f"SKIP: invalid destination path (traversal): {dst}")
+                  continue
+
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
