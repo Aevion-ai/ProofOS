@@ -1,0 +1,4 @@
+## 2023-10-27 - Path Traversal in Mirror Workflow
+**Vulnerability:** The python script in the `.github/workflows/mirror-from-monorepo.yml` workflow constructs file paths based on `MIRROR_MANIFEST.md` entries without resolving and validating them. An attacker who modifies the manifest could inject path traversal sequences (like `../../etc/passwd` or `/root/.ssh/id_rsa`) to leak or overwrite arbitrary files on the GitHub runner.
+**Learning:** Concatenating path strings via the `/` operator in `pathlib` (e.g., `Path(".monorepo") / "/etc/passwd"`) will evaluate to the absolute path itself (`/etc/passwd`), entirely dropping the intended base directory.
+**Prevention:** To prevent path traversal vulnerabilities in Python when constructing paths from untrusted input, always call `.resolve()` on the constructed path and validate it using `.is_relative_to()` against the allowed base directory.
