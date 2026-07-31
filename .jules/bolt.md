@@ -1,0 +1,3 @@
+## 2024-05-17 - Optimize Enum comparisons by caching order mappings
+**Learning:** In Python, defining a dictionary inside a dunder method (like `__ge__` or `__gt__`) to map enum values to integers for ordering causes the dictionary to be re-allocated on every single comparison operation. This creates significant overhead in hot paths.
+**Action:** When implementing custom ordering for Python Enums, always extract the mapping dictionary to a module-level constant defined directly below the class definition (to avoid `NameError`). Do not dynamically monkey-patch methods outside the class to achieve this caching.
