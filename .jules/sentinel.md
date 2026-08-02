@@ -1,0 +1,4 @@
+## 2025-02-28 - Path Traversal in Mirror Workflow
+**Vulnerability:** In `.github/workflows/mirror-from-monorepo.yml`, `dst_path = Path(dst)` is constructed from parsed untrusted input from `MIRROR_MANIFEST.md`. If an attacker submits a PR changing `dst` to an absolute path (e.g., `/etc/shadow` or `../../root`), `Path(dst)` resolves directly to it, potentially overwriting arbitrary files during sync. This is critical because the workflow runs with permissions.
+**Learning:** `Path()` parsing from regex does not restrict the output to be relative to the repository root by default. Passing an absolute string makes the `Path` absolute, ignoring the current working directory.
+**Prevention:** Always validate `dst_path` using `.resolve().is_relative_to(Path.cwd())` before attempting to write or copy files to ensure operations stay contained.
