@@ -4,7 +4,6 @@ Validates the access envelope constraints confirmed by Anthropic Fable 5 / Mytho
 """
 
 import pytest
-
 from src.aevion_runtime.model_access_envelope import (
     AccessTier,
     CapabilityClass,
@@ -197,7 +196,6 @@ class TestSchemaValidation:
     def test_schema_validation_roundtrip(self) -> None:
         import json
         from pathlib import Path
-
         import jsonschema
 
         schema_path = Path(__file__).parent.parent / "schemas" / "model_access_envelope.schema.json"
@@ -228,7 +226,6 @@ class TestSchemaValidation:
         """Schema should reject envelopes that violate constraints."""
         import json
         from pathlib import Path
-
         import jsonschema
 
         schema_path = Path(__file__).parent.parent / "schemas" / "model_access_envelope.schema.json"
