@@ -1,0 +1,54 @@
+For a consequential transition
+\[
+x_t \xrightarrow{a_t} x_{t+1},
+\]
+admission requires explicit obligations
+\[
+O = \{\text{identity}, \text{authority}, \text{evidence},
+\text{ACP binding}, \text{XAL verification}, \text{continuity},
+\text{effect scope}\}.
+\]
+If any mandatory obligation is missing,
+\[
+\neg\bigwedge_{o \in O} o \implies
+\operatorname{Disposition} \in \{\text{HOLD}, \text{REJECT}\}.
+\]
+
+\begin{definition}[Consequential transition]
+A transition $x_t \xrightarrow{a_t} x_{t+1}$ is \emph{consequential} if it
+changes persistent state, invokes a tool with external effect, modifies
+code or configuration, or affects another principal.
+\end{definition}
+
+\begin{definition}[Obligation discharge]
+An obligation $o \in O$ is \emph{discharged} when a content-bound reference
+exists that an independent verifier can recompute: a digest, a lease, a
+signed program, or a receipt binding the obligation to the specific
+transition.
+\end{definition}
+
+The estate reference implementation encodes these obligations as a typed
+set. A transition request carries optional fields for each obligation;
+the gate derives the missing set and returns REJECT when any mandatory
+obligation is absent, HOLD when evidence is present but not content-bound,
+and ADMIT only when every obligation is discharged with content-addressed
+evidence.
+
+\begin{theorem}[Reject absorption]\label{thm:reject-absorbing}
+Once a hard fault exists, downstream components cannot convert the
+transition into ADMIT, PASS, or PROMOTE.
+\end{theorem}
+
+\begin{proof}
+By the definition of the disposition function: a hard fault forces the
+disposition to REJECT at the transition gate, and every downstream stage
+(compilation, execution, replay, promotion) consumes the disposition
+without the authority to override it. Formally,
+$\texttt{forcesReject}(d) \iff d = \texttt{REJECT}$, and
+$\texttt{hard\_fault\_not\_admit}$ establishes $d \neq \texttt{ADMIT}$
+whenever the fault exists.
+\end{proof}
+
+The Lean formalization \texttt{RejectAbsorption.lean} proves both
+\texttt{reject\_is\_absorbing} and \texttt{hard\_fault\_not\_admit}
+structurally.
