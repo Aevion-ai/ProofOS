@@ -1,0 +1,23 @@
+A second agent account does not constitute an independent reviewer when
+both identities derive from the same authority, credential, model-session,
+or campaign root.
+
+\begin{theorem}[Same root is not quorum]\label{thm:root}
+Two identities derived from the same authority root do not constitute an
+independent endorsement.
+\end{theorem}
+
+\begin{proof}
+Independence is defined over the authority root, not over the agent
+identifier. The Lean statement
+\texttt{same\_authority\_root\_is\_not\_quorum} and the executable
+\texttt{same\_authority\_root\_is\_not\_independent} both return false when
+the roots are equal.
+\end{proof}
+
+This rule has operational force in review and promotion paths: a second
+account created under the same campaign credential, a model session
+replayed under the same lease, or a sub-agent spawned by the same principal
+all share a root. Their endorsements are correlated, not independent, and
+cannot discharge quorum obligations. The evaluation battery includes the
+same-root review fixture (expected HOLD or REJECT).

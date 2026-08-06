@@ -1,0 +1,21 @@
+Self-improving agents may rewrite their context, memory, skills, and
+harness, but they cannot rewrite the authority conditions under which
+their changes become real. We have presented a fail-closed architecture in
+which every consequential transition discharges typed obligations for
+identity, authority, evidence, program and environment binding,
+continuity, and effect scope; reflection is separated from promotion;
+receipts bind replay and resume semantics; and independent authority roots
+are required for quorum.
+
+The reference implementation and its evaluation battery demonstrate the
+gate's behavior on adversarial fixtures, including the distinction between
+admission disposition and execution outcome. The released artifact is an
+open research extraction: source, schemas, formal statements, tests, and
+explicit claim ceilings, reproducible locally and in CI.
+
+Future work proceeds along three lanes: (i) live integration with a
+long-horizon agent harness and middle-layer activation capture; (ii)
+verified linking between the Lean statements and the Python gate; and
+(iii) deployment of the gate at the tool-invocation boundary alongside
+centralized write-control layers such as WriteGuard, with authority and
+receipt validation layered above.

@@ -1,0 +1,36 @@
+Self-improving systems---reflection loops, memory compilers, invariant
+discovery, and self-refining harnesses---may generate candidates for
+change. The boundary we enforce is that none of these paths can produce
+authority.
+
+\begin{theorem}[Candidate-only cannot authorize]\label{thm:candidate-only}
+A candidate artifact cannot, by itself, produce an authority grant.
+\end{theorem}
+
+\begin{proof}
+By construction of the authority-grant relation: a grant is admissible only
+when its root identifier differs from the candidate's emission path. The
+Lean statement \texttt{candidate\_only\_cannot\_authorize} makes this a
+type-level obligation, and the reference gate
+(\texttt{promote\_candidate}) returns REJECT when the candidate is its own
+root.
+\end{proof}
+
+\begin{theorem}[No same-epoch self-certification]\label{thm:epoch}
+Reflection generated in epoch $E$ cannot authorize an action in epoch $E$.
+\end{theorem}
+
+\begin{proof}
+Epoch separation is enforced at the reflection boundary: the reflection
+epoch must strictly precede the authority-eligibility epoch
+($E$ execution $\to$ $E{+}1$ reflection $\to$ $E{+}2$ authority). The Lean
+statement \texttt{no\_same\_epoch\_self\_certification} and the executable
+gate \texttt{same\_epoch\_self\_certification} both reject
+$\texttt{reflectionEpoch} = \texttt{authorityEpoch}$.
+\end{proof}
+
+The estate's reflection module exposes \texttt{assert\_reflection\_only},
+which raises on actions in the \texttt{authorize}/\texttt{grant}/
+\texttt{promote}/\texttt{admit}/\texttt{execute} classes. Reflection paths
+may observe, score, challenge, and recommend; they may not act. This is a
+runtime guard in addition to the type-level obligation.
