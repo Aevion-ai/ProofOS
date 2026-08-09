@@ -68,12 +68,23 @@ jobs:
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
-              src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+              # Strip leading slashes to prevent absolute path evaluation on concatenation
+              src, dst = m.group(1).lstrip('/'), m.group(2).lstrip('/')
+
+              src_path = (Path(".monorepo") / src).resolve()
+              if not src_path.is_relative_to(Path(".monorepo").resolve()):
+                  print(f"SKIP: source path traversal detected: {src}")
+                  continue
+
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+
+              dst_path = Path(dst).resolve()
+              if not dst_path.is_relative_to(Path.cwd().resolve()):
+                  print(f"SKIP: destination path traversal detected: {dst}")
+                  continue
+
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
