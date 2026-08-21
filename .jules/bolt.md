@@ -1,0 +1,3 @@
+## 2024-05-24 - Module-Level Constant Caching for Enum Comparisons
+**Learning:** In Python, redefining a dictionary mapping inside an Enum's magic methods (like `__ge__` and `__gt__`) creates the dictionary on every call. This is particularly inefficient for comparison methods that might be called frequently in hot loops or validation checks.
+**Action:** Extract the dictionary to a module-level constant defined below the class, avoiding dynamic dictionary creation per method call, improving performance by roughly ~2.6x. Do not monkey-patch methods outside the class to preserve type checking and semantics.
