@@ -14,9 +14,9 @@ test('aevion.ai renders correctly', async ({ page }) => {
   await expect(page.locator('h1')).toContainText(/Proof|Governance|Aevion/i, { timeout: 10000 });
 
   // KPI dashboard — exact match to avoid strict mode violation with supporting text
-  await expect(page.getByText('Proved (public repo)')).toBeVisible({ timeout: 10000 });
-  await expect(page.getByText('Open Obligations')).toBeVisible();
-  await expect(page.getByText('Colony Auto-Pass')).toBeVisible();
+  await expect(page.getByText('Proved (public repo)', { exact: true })).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText('Open Obligations', { exact: true })).toBeVisible();
+  await expect(page.getByText('Colony Auto-Pass', { exact: true })).toBeVisible();
 
   // Verify hero content is visible
   await expect(page.getByText('Proof-Native')).toBeVisible({ timeout: 10000 });

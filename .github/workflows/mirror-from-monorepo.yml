@@ -69,11 +69,23 @@ jobs:
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+
+              monorepo_base = Path(".monorepo").resolve()
+              src_path = (monorepo_base / src.lstrip("/")).resolve()
+              if not src_path.is_relative_to(monorepo_base):
+                  print(f"SKIP: invalid source path (path traversal): {src}")
+                  continue
+
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+
+              dst_base = Path(".").resolve()
+              dst_path = (dst_base / dst.lstrip("/")).resolve()
+              if not dst_path.is_relative_to(dst_base):
+                  print(f"SKIP: invalid destination path (path traversal): {dst}")
+                  continue
+
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
