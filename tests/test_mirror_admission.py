@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 from pathlib import Path
 
 import pytest
@@ -380,3 +381,37 @@ class TestGovernedCopyPath:
         assert decision_b.admitted
         assert decision_a.receipt_hash == decision_b.receipt_hash
         assert decision_a.resolved_src != decision_b.resolved_src
+
+    def test_outbound_hardlink_denies_and_preserves_dest(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        mirror_sync = _load_mirror_sync()
+        outside = tmp_path / "outside"
+        outside.mkdir()
+        marker = "HARDLINK_OUTSIDE_MARKER_FIXTURE"
+        outside_file = outside / "secret.txt"
+        outside_file.write_text(marker, encoding="utf-8")
+
+        monorepo = tmp_path / "monorepo"
+        repo = tmp_path / "repo"
+        pkg = monorepo / "pkg"
+        pkg.mkdir(parents=True)
+        repo.mkdir()
+
+        dest_pkg = repo / "pkg"
+        dest_pkg.mkdir(parents=True)
+        (dest_pkg / "keep_me.txt").write_text("preserve me", encoding="utf-8")
+
+        inside_link = pkg / "inside_link.txt"
+        try:
+            os.link(outside_file, inside_link)
+        except OSError as exc:
+            pytest.skip(f"hardlinks not supported on this platform: {exc}")
+
+        result = mirror_sync.copy_mapping("pkg", "pkg", monorepo, repo)
+        assert result == 1
+        assert (dest_pkg / "keep_me.txt").read_text(encoding="utf-8") == "preserve me"
+        for path in dest_pkg.rglob("*"):
+            if path.is_file() and not path.is_symlink():
+                assert marker not in path.read_text(encoding="utf-8")

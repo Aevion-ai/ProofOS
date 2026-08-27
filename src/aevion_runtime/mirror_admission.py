@@ -14,6 +14,7 @@ import json
 import os
 import re
 import shutil
+import stat
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
@@ -241,6 +242,52 @@ def _symlink_resolves_outside_root(path: Path, root: Path) -> bool:
         return True
 
 
+def _inode_path_counts_under(root: Path) -> dict[tuple[int, int], int]:
+    """Count regular-file path names per (st_dev, st_ino) under ``root``."""
+    counts: dict[tuple[int, int], int] = {}
+    for dirpath, _dirnames, filenames in os.walk(root, followlinks=False):
+        current = Path(dirpath)
+        for name in filenames:
+            path = current / name
+            if path.is_symlink():
+                continue
+            try:
+                st = path.lstat()
+            except OSError:
+                continue
+            if not stat.S_ISREG(st.st_mode):
+                continue
+            key = (st.st_dev, st.st_ino)
+            counts[key] = counts.get(key, 0) + 1
+    return counts
+
+
+def _hardlink_reaches_outside(
+    path: Path,
+    src_root: Path,
+    inode_counts: dict[tuple[int, int], int],
+) -> bool:
+    """
+    True when a regular file has more hardlinks than names under ``src_root``.
+
+    If ``st_nlink`` exceeds the number of paths seen under the admitted tree,
+    at least one link name lies outside and copying would pull in outside bytes.
+    """
+    if path.is_symlink():
+        return False
+    try:
+        st = path.lstat()
+    except OSError:
+        return True
+    if not stat.S_ISREG(st.st_mode):
+        return False
+    if st.st_nlink <= 1:
+        return False
+    key = (st.st_dev, st.st_ino)
+    under_root = inode_counts.get(key, 0)
+    return under_root < st.st_nlink
+
+
 @dataclass(frozen=True)
 class _GovernedEntry:
     src_path: Path
@@ -260,6 +307,7 @@ def _collect_governed_entries(
     Walk ``src_dir`` without following symlinks; validate every child name/path.
     """
     entries: list[_GovernedEntry] = []
+    inode_counts = _inode_path_counts_under(src_root)
 
     for dirpath, dirnames, filenames in os.walk(
         src_dir,
@@ -317,6 +365,15 @@ def _collect_governed_entries(
                         str(path),
                     )
 
+            if _hardlink_reaches_outside(path, src_root, inode_counts):
+                return entries, _deny_child_decision(
+                    mapping_src,
+                    mapping_dst,
+                    rel_child,
+                    "hardlink resolves outside admitted root",
+                    str(path),
+                )
+
             entries.append(_GovernedEntry(path, rel_child, path.is_symlink()))
 
     return entries, None
@@ -360,6 +417,8 @@ def governed_copy_mapping(
     admitted. A child deny leaves any pre-existing destination untouched.
     Outbound symlinks (resolved target outside the admitted source root) are
     denied; inbound symlinks are copied as links without following them.
+    Hardlinked regular files whose inode names extend outside the admitted
+    source tree are denied.
     """
     decision = evaluate_mapping(src, dst, monorepo_base, repo_root)
     if not decision.admitted:
@@ -416,6 +475,16 @@ def governed_copy_mapping(
         if src_path.is_symlink():
             staged_file.symlink_to(src_path.readlink())
         else:
+            inode_counts = _inode_path_counts_under(src_path.parent)
+            if _hardlink_reaches_outside(src_path, src_path.resolve(), inode_counts):
+                return _make_decision(
+                    "deny",
+                    "hardlink resolves outside admitted root",
+                    src,
+                    dst,
+                    resolved_src=str(src_path),
+                    resolved_dst=str(dst_path),
+                )
             shutil.copy2(src_path, staged_file)
         _commit_staged_to_dest(staged_file, dst_path)
         staged_dir = None
