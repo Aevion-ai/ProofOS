@@ -129,26 +129,38 @@ class AdmissionDecision:
         return self.decision == "admit"
 
 
-def _receipt_body(
+def _receipt_hash_body(
     decision: str,
     reason: str,
     src: str,
     dst: str,
-    resolved_src: str | None,
-    resolved_dst: str | None,
 ) -> dict[str, Any]:
-    """Stable receipt payload (no timestamps — hash is replayable)."""
-    body: dict[str, Any] = {
+    """Stable receipt payload for hashing (no timestamps or host-absolute paths)."""
+    return {
         "decision": decision,
         "reason": reason,
         "src": src,
         "dst": dst,
     }
-    if resolved_src is not None:
-        body["resolved_src"] = resolved_src
-    if resolved_dst is not None:
-        body["resolved_dst"] = resolved_dst
-    return body
+
+
+def _make_decision(
+    decision: str,
+    reason: str,
+    src: str,
+    dst: str,
+    resolved_src: str | None = None,
+    resolved_dst: str | None = None,
+) -> AdmissionDecision:
+    return AdmissionDecision(
+        decision=decision,
+        reason=reason,
+        src=src,
+        dst=dst,
+        resolved_src=resolved_src,
+        resolved_dst=resolved_dst,
+        receipt_hash=canonical_sha256(_receipt_hash_body(decision, reason, src, dst)),
+    )
 
 
 def evaluate_mapping(
@@ -162,79 +174,33 @@ def evaluate_mapping(
     """
     secret_src = _secret_deny_reason(src)
     if secret_src:
-        body = _receipt_body("deny", secret_src, src, dst, None, None)
-        return AdmissionDecision(
-            decision="deny",
-            reason=secret_src,
-            src=src,
-            dst=dst,
-            resolved_src=None,
-            resolved_dst=None,
-            receipt_hash=canonical_sha256(body),
-        )
+        return _make_decision("deny", secret_src, src, dst)
 
     secret_dst = _secret_deny_reason(dst)
     if secret_dst:
-        body = _receipt_body("deny", secret_dst, src, dst, None, None)
-        return AdmissionDecision(
-            decision="deny",
-            reason=secret_dst,
-            src=src,
-            dst=dst,
-            resolved_src=None,
-            resolved_dst=None,
-            receipt_hash=canonical_sha256(body),
-        )
+        return _make_decision("deny", secret_dst, src, dst)
 
     resolved_src, src_reason = _path_under_base(monorepo_base, src)
     if src_reason:
-        body = _receipt_body("deny", src_reason, src, dst, None, None)
-        return AdmissionDecision(
-            decision="deny",
-            reason=src_reason,
-            src=src,
-            dst=dst,
-            resolved_src=None,
-            resolved_dst=None,
-            receipt_hash=canonical_sha256(body),
-        )
+        return _make_decision("deny", src_reason, src, dst)
 
     resolved_dst, dst_reason = _path_under_base(repo_root, dst)
     if dst_reason:
-        body = _receipt_body(
+        return _make_decision(
             "deny",
             dst_reason,
             src,
             dst,
-            str(resolved_src),
-            None,
-        )
-        return AdmissionDecision(
-            decision="deny",
-            reason=dst_reason,
-            src=src,
-            dst=dst,
             resolved_src=str(resolved_src),
-            resolved_dst=None,
-            receipt_hash=canonical_sha256(body),
         )
 
-    body = _receipt_body(
+    return _make_decision(
         "admit",
         "mapping within governed bases",
         src,
         dst,
-        str(resolved_src),
-        str(resolved_dst),
-    )
-    return AdmissionDecision(
-        decision="admit",
-        reason="mapping within governed bases",
-        src=src,
-        dst=dst,
         resolved_src=str(resolved_src),
         resolved_dst=str(resolved_dst),
-        receipt_hash=canonical_sha256(body),
     )
 
 
@@ -254,15 +220,13 @@ def _deny_child_decision(
 ) -> AdmissionDecision:
     child_src = _child_mapping_path(mapping_src, rel_child)
     child_dst = _child_mapping_path(mapping_dst, rel_child)
-    body = _receipt_body("deny", reason, child_src, child_dst, resolved_src, resolved_dst)
-    return AdmissionDecision(
-        decision="deny",
-        reason=reason,
-        src=child_src,
-        dst=child_dst,
+    return _make_decision(
+        "deny",
+        reason,
+        child_src,
+        child_dst,
         resolved_src=resolved_src,
         resolved_dst=resolved_dst,
-        receipt_hash=canonical_sha256(body),
     )
 
 
@@ -405,7 +369,14 @@ def governed_copy_mapping(
     dst_path = Path(decision.resolved_dst)
 
     if not src_path.exists():
-        return decision
+        return _make_decision(
+            "deny",
+            "source path not found",
+            src,
+            dst,
+            resolved_src=str(src_path),
+            resolved_dst=str(dst_path),
+        )
 
     if src_path.is_symlink():
         if _symlink_resolves_outside_root(src_path, monorepo_base.resolve()):

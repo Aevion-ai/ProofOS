@@ -343,3 +343,40 @@ class TestGovernedCopyPath:
         assert decision.admitted
         assert mirror_sync.copy_mapping("pkg", "pkg", monorepo, repo) == 0
         assert (repo / "pkg" / "nested" / "note.txt").exists()
+
+    def test_missing_src_denies_and_preserves_dest(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        mirror_sync = _load_mirror_sync()
+        monorepo = tmp_path / "monorepo"
+        repo = tmp_path / "repo"
+        monorepo.mkdir()
+        repo.mkdir()
+
+        dest = repo / "missing.txt"
+        dest.write_text("keep", encoding="utf-8")
+
+        result = mirror_sync.copy_mapping("missing.txt", "missing.txt", monorepo, repo)
+        assert result == 1
+        assert dest.read_text(encoding="utf-8") == "keep"
+
+    def test_identical_mapping_same_receipt_hash_across_bases(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        monorepo_a = tmp_path / "mono_a"
+        repo_a = tmp_path / "repo_a"
+        monorepo_b = tmp_path / "mono_b"
+        repo_b = tmp_path / "repo_b"
+        for path in (monorepo_a, repo_a, monorepo_b, repo_b):
+            path.mkdir()
+        (monorepo_a / "LICENSE").write_text("MIT", encoding="utf-8")
+        (monorepo_b / "LICENSE").write_text("MIT", encoding="utf-8")
+
+        decision_a = evaluate_mapping("LICENSE", "LICENSE", monorepo_a, repo_a)
+        decision_b = evaluate_mapping("LICENSE", "LICENSE", monorepo_b, repo_b)
+        assert decision_a.admitted
+        assert decision_b.admitted
+        assert decision_a.receipt_hash == decision_b.receipt_hash
+        assert decision_a.resolved_src != decision_b.resolved_src

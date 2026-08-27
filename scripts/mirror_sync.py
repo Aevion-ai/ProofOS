@@ -51,8 +51,7 @@ def copy_mapping(
     """
     Governed copy for one manifest mapping.
 
-    Returns 0 on admit (including skip when source missing after admit),
-    1 on deny.
+    Returns 0 on successful copy, 1 on deny.
     """
     decision = governed_copy_mapping(src, dst, monorepo_base, repo_root)
     print(
@@ -62,10 +61,6 @@ def copy_mapping(
     if not decision.admitted:
         print(f"DENY: {decision.reason} for {src} -> {dst}")
         return 1
-
-    if decision.resolved_src and not Path(decision.resolved_src).exists():
-        print(f"SKIP: source not found: {src}")
-        return 0
 
     print(f"COPY: {src} -> {dst}")
     return 0
