@@ -32,23 +32,21 @@ class AccessTier(str, Enum):
 
     def __ge__(self, other: AccessTier) -> bool:  # type: ignore[override]
         """Partial order: more restrictive >= less restrictive."""
-        order = {
-            AccessTier.PUBLIC: 0,
-            AccessTier.BUSINESS: 1,
-            AccessTier.TRUSTED_ACCESS: 2,
-            AccessTier.HUMAN_ONLY: 3,
-        }
-        return order[self] >= order[other]
+        return _ACCESS_TIER_ORDER[self] >= _ACCESS_TIER_ORDER[other]
 
     def __gt__(self, other: AccessTier) -> bool:  # type: ignore[override]
         """Strict partial order: more restrictive > less restrictive."""
-        order = {
-            AccessTier.PUBLIC: 0,
-            AccessTier.BUSINESS: 1,
-            AccessTier.TRUSTED_ACCESS: 2,
-            AccessTier.HUMAN_ONLY: 3,
-        }
-        return order[self] > order[other]
+        return _ACCESS_TIER_ORDER[self] > _ACCESS_TIER_ORDER[other]
+
+
+# Optimization: Dictionary moved out of __ge__ and __gt__ methods to avoid O(N)
+# reconstruction overhead per method call, improving comparison performance.
+_ACCESS_TIER_ORDER = {
+    AccessTier.PUBLIC: 0,
+    AccessTier.BUSINESS: 1,
+    AccessTier.TRUSTED_ACCESS: 2,
+    AccessTier.HUMAN_ONLY: 3,
+}
 
 
 class SafeguardMode(str, Enum):
