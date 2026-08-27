@@ -14,6 +14,7 @@ import json
 import os
 import re
 import shutil
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any, Mapping
@@ -370,6 +371,17 @@ def _materialize_governed_entries(
             shutil.copy2(entry.src_path, dst_path)
 
 
+def _commit_staged_to_dest(staged: Path, dst_path: Path) -> None:
+    """Replace ``dst_path`` with staged content after all admission checks pass."""
+    if dst_path.exists():
+        if dst_path.is_dir():
+            shutil.rmtree(dst_path)
+        else:
+            dst_path.unlink()
+    dst_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(staged), str(dst_path))
+
+
 def governed_copy_mapping(
     src: str,
     dst: str,
@@ -380,6 +392,8 @@ def governed_copy_mapping(
     Evaluate and copy one manifest mapping with per-child admission checks.
 
     Directory copies validate every child path/name before writing anything.
+    Staged content is committed to the destination only after all children are
+    admitted. A child deny leaves any pre-existing destination untouched.
     Outbound symlinks (resolved target outside the admitted source root) are
     denied; inbound symlinks are copied as links without following them.
     """
@@ -403,12 +417,6 @@ def governed_copy_mapping(
                 str(src_path),
             )
 
-    if dst_path.exists():
-        if dst_path.is_dir():
-            shutil.rmtree(dst_path)
-        else:
-            dst_path.unlink()
-
     if src_path.is_dir():
         entries, deny = _collect_governed_entries(
             src_path,
@@ -421,15 +429,27 @@ def governed_copy_mapping(
         if deny is not None:
             return deny
 
-        dst_path.mkdir(parents=True, exist_ok=True)
-        _materialize_governed_entries(entries, dst_path)
+        staged_dir = Path(tempfile.mkdtemp(prefix="mirror-stage-"))
+        try:
+            _materialize_governed_entries(entries, staged_dir)
+            _commit_staged_to_dest(staged_dir, dst_path)
+            staged_dir = None
+        finally:
+            if staged_dir is not None and staged_dir.exists():
+                shutil.rmtree(staged_dir)
         return decision
 
-    if src_path.is_symlink():
-        dst_path.parent.mkdir(parents=True, exist_ok=True)
-        dst_path.symlink_to(src_path.readlink())
-        return decision
+    staged_dir = Path(tempfile.mkdtemp(prefix="mirror-stage-"))
+    staged_file = staged_dir / "payload"
+    try:
+        if src_path.is_symlink():
+            staged_file.symlink_to(src_path.readlink())
+        else:
+            shutil.copy2(src_path, staged_file)
+        _commit_staged_to_dest(staged_file, dst_path)
+        staged_dir = None
+    finally:
+        if staged_dir is not None and staged_dir.exists():
+            shutil.rmtree(staged_dir)
 
-    dst_path.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(src_path, dst_path)
     return decision

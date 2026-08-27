@@ -260,6 +260,30 @@ class TestGovernedCopyPath:
         assert result == 1
         assert not (repo / "pkg" / "nested" / ".env").exists()
 
+    def test_nested_secret_deny_preserves_preexisting_dest(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        mirror_sync = _load_mirror_sync()
+        monorepo = tmp_path / "monorepo"
+        repo = tmp_path / "repo"
+        pkg = monorepo / "pkg"
+        nested = pkg / "nested"
+        nested.mkdir(parents=True)
+        repo.mkdir()
+
+        dest_pkg = repo / "pkg"
+        dest_pkg.mkdir(parents=True)
+        (dest_pkg / "keep_me.txt").write_text("preserve me", encoding="utf-8")
+
+        (nested / ".env").write_text("FAKE_SECRET=fixture", encoding="utf-8")
+
+        result = mirror_sync.copy_mapping("pkg", "pkg", monorepo, repo)
+        assert result == 1
+        assert (dest_pkg / "keep_me.txt").read_text(encoding="utf-8") == "preserve me"
+        assert not (dest_pkg / "nested" / ".env").exists()
+        assert not (dest_pkg / ".env").exists()
+
     def test_outbound_child_symlink_denies_and_does_not_copy_target(
         self,
         tmp_path: Path,
