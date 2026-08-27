@@ -11,12 +11,14 @@ from __future__ import annotations
 import datetime as dt
 import os
 import re
-import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-from src.aevion_runtime.mirror_admission import evaluate_mapping, parse_path_map_lines
+from src.aevion_runtime.mirror_admission import (
+    governed_copy_mapping,
+    parse_path_map_lines,
+)
 
 
 def _update_manifest_metadata(
@@ -38,6 +40,35 @@ def _update_manifest_metadata(
         flags=re.MULTILINE,
     )
     manifest.write_text(text, encoding="utf-8")
+
+
+def copy_mapping(
+    src: str,
+    dst: str,
+    monorepo_base: Path,
+    repo_root: Path,
+) -> int:
+    """
+    Governed copy for one manifest mapping.
+
+    Returns 0 on admit (including skip when source missing after admit),
+    1 on deny.
+    """
+    decision = governed_copy_mapping(src, dst, monorepo_base, repo_root)
+    print(
+        f"RECEIPT {decision.receipt_hash}: "
+        f"{decision.decision} {src} -> {dst} ({decision.reason})"
+    )
+    if not decision.admitted:
+        print(f"DENY: {decision.reason} for {src} -> {dst}")
+        return 1
+
+    if decision.resolved_src and not Path(decision.resolved_src).exists():
+        print(f"SKIP: source not found: {src}")
+        return 0
+
+    print(f"COPY: {src} -> {dst}")
+    return 0
 
 
 def main() -> int:
@@ -68,32 +99,8 @@ def main() -> int:
         return 1
 
     for src, dst in mappings:
-        decision = evaluate_mapping(src, dst, monorepo_base, repo_root)
-        print(
-            f"RECEIPT {decision.receipt_hash}: "
-            f"{decision.decision} {src} -> {dst} ({decision.reason})"
-        )
-        if not decision.admitted:
-            print(f"DENY: {decision.reason} for {src} -> {dst}")
+        if copy_mapping(src, dst, monorepo_base, repo_root) != 0:
             return 1
-
-        src_path = Path(decision.resolved_src)
-        if not src_path.exists():
-            print(f"SKIP: source not found: {src}")
-            continue
-
-        dst_path = Path(decision.resolved_dst)
-        print(f"COPY: {src} -> {dst}")
-        if dst_path.exists():
-            if dst_path.is_dir():
-                shutil.rmtree(dst_path)
-            else:
-                dst_path.unlink()
-        dst_path.parent.mkdir(parents=True, exist_ok=True)
-        if src_path.is_dir():
-            shutil.copytree(src_path, dst_path)
-        else:
-            shutil.copy2(src_path, dst_path)
 
     _update_manifest_metadata(manifest, source_sha, last_sync)
     return 0

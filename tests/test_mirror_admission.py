@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 
 import pytest
@@ -10,8 +11,22 @@ from src.aevion_runtime.mirror_admission import (
     AdmissionDecision,
     canonical_sha256,
     evaluate_mapping,
+    governed_copy_mapping,
     parse_path_map_lines,
 )
+
+
+def _load_mirror_sync() -> object:
+    """Load scripts/mirror_sync.py — the workflow copy entrypoint."""
+    root = Path(__file__).parent.parent
+    spec = importlib.util.spec_from_file_location(
+        "mirror_sync",
+        root / "scripts" / "mirror_sync.py",
+    )
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
 
 
 MANIFEST_FIXTURE = """\
@@ -221,3 +236,86 @@ class TestAdmissionDecisionType:
             receipt_hash="abc",
         )
         assert not d.admitted
+
+
+class TestGovernedCopyPath:
+    """Regression tests through scripts/mirror_sync.copy_mapping (real copy path)."""
+
+    def test_nested_secret_child_denies_and_does_not_copy(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        mirror_sync = _load_mirror_sync()
+        monorepo = tmp_path / "monorepo"
+        repo = tmp_path / "repo"
+        pkg = monorepo / "pkg"
+        pkg.mkdir(parents=True)
+        repo.mkdir()
+        (pkg / "ok.txt").write_text("ok", encoding="utf-8")
+        nested = pkg / "nested"
+        nested.mkdir()
+        (nested / ".env").write_text("FAKE_SECRET=fixture", encoding="utf-8")
+
+        result = mirror_sync.copy_mapping("pkg", "pkg", monorepo, repo)
+        assert result == 1
+        assert not (repo / "pkg" / "nested" / ".env").exists()
+
+    def test_outbound_child_symlink_denies_and_does_not_copy_target(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        mirror_sync = _load_mirror_sync()
+        outside = tmp_path / "outside"
+        outside.mkdir()
+        (outside / "escaped.txt").write_text("ESCAPED_BYTES_FIXTURE", encoding="utf-8")
+
+        monorepo = tmp_path / "monorepo"
+        repo = tmp_path / "repo"
+        pkg = monorepo / "pkg"
+        pkg.mkdir(parents=True)
+        repo.mkdir()
+        (pkg / "ok.txt").write_text("ok", encoding="utf-8")
+        (pkg / "escape_link").symlink_to(outside / "escaped.txt")
+
+        result = mirror_sync.copy_mapping("pkg", "pkg", monorepo, repo)
+        assert result == 1
+        assert not (repo / "pkg" / "escape_link").exists()
+        dst_pkg = repo / "pkg"
+        if dst_pkg.exists():
+            for path in dst_pkg.rglob("*"):
+                if path.is_file() and not path.is_symlink():
+                    assert "ESCAPED_BYTES_FIXTURE" not in path.read_text(encoding="utf-8")
+
+    def test_legitimate_nested_file_copies_via_mirror_sync(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        mirror_sync = _load_mirror_sync()
+        monorepo = tmp_path / "monorepo"
+        repo = tmp_path / "repo"
+        pkg = monorepo / "pkg"
+        nested = pkg / "nested"
+        nested.mkdir(parents=True)
+        repo.mkdir()
+        (nested / "readme.md").write_text("hello nested", encoding="utf-8")
+
+        result = mirror_sync.copy_mapping("pkg", "pkg", monorepo, repo)
+        assert result == 0
+        assert (repo / "pkg" / "nested" / "readme.md").read_text(encoding="utf-8") == "hello nested"
+
+    def test_governed_copy_mapping_matches_mirror_sync_entrypoint(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        mirror_sync = _load_mirror_sync()
+        monorepo = tmp_path / "monorepo"
+        repo = tmp_path / "repo"
+        nested = monorepo / "pkg" / "nested"
+        nested.mkdir(parents=True)
+        repo.mkdir()
+        (nested / "note.txt").write_text("synced", encoding="utf-8")
+
+        decision = governed_copy_mapping("pkg", "pkg", monorepo, repo)
+        assert decision.admitted
+        assert mirror_sync.copy_mapping("pkg", "pkg", monorepo, repo) == 0
+        assert (repo / "pkg" / "nested" / "note.txt").exists()

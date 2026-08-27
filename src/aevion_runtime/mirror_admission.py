@@ -11,7 +11,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
+import shutil
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any, Mapping
@@ -233,3 +235,201 @@ def evaluate_mapping(
         resolved_dst=str(resolved_dst),
         receipt_hash=canonical_sha256(body),
     )
+
+
+def _child_mapping_path(base: str, rel: str) -> str:
+    if not rel:
+        return base
+    return f"{base}/{rel}"
+
+
+def _deny_child_decision(
+    mapping_src: str,
+    mapping_dst: str,
+    rel_child: str,
+    reason: str,
+    resolved_src: str | None = None,
+    resolved_dst: str | None = None,
+) -> AdmissionDecision:
+    child_src = _child_mapping_path(mapping_src, rel_child)
+    child_dst = _child_mapping_path(mapping_dst, rel_child)
+    body = _receipt_body("deny", reason, child_src, child_dst, resolved_src, resolved_dst)
+    return AdmissionDecision(
+        decision="deny",
+        reason=reason,
+        src=child_src,
+        dst=child_dst,
+        resolved_src=resolved_src,
+        resolved_dst=resolved_dst,
+        receipt_hash=canonical_sha256(body),
+    )
+
+
+def _symlink_resolves_outside_root(path: Path, root: Path) -> bool:
+    """True when a symlink's resolved target lies outside ``root`` (fail-closed)."""
+    if not path.is_symlink():
+        return False
+    try:
+        resolved = path.resolve()
+        return not resolved.is_relative_to(root.resolve())
+    except (OSError, ValueError):
+        return True
+
+
+@dataclass(frozen=True)
+class _GovernedEntry:
+    src_path: Path
+    rel_child: str
+    is_symlink: bool
+
+
+def _collect_governed_entries(
+    src_dir: Path,
+    src_root: Path,
+    mapping_src: str,
+    mapping_dst: str,
+    monorepo_base: Path,
+    repo_root: Path,
+) -> tuple[list[_GovernedEntry], AdmissionDecision | None]:
+    """
+    Walk ``src_dir`` without following symlinks; validate every child name/path.
+    """
+    entries: list[_GovernedEntry] = []
+
+    for dirpath, dirnames, filenames in os.walk(
+        src_dir,
+        topdown=True,
+        followlinks=False,
+    ):
+        current = Path(dirpath)
+        rel_dir = current.relative_to(src_dir)
+        rel_dir_str = rel_dir.as_posix() if rel_dir.parts else ""
+
+        for name in dirnames:
+            path = current / name
+            rel_child = f"{rel_dir_str}/{name}" if rel_dir_str else name
+
+            child_decision = evaluate_mapping(
+                _child_mapping_path(mapping_src, rel_child),
+                _child_mapping_path(mapping_dst, rel_child),
+                monorepo_base,
+                repo_root,
+            )
+            if not child_decision.admitted:
+                return entries, child_decision
+
+            if path.is_symlink():
+                if _symlink_resolves_outside_root(path, src_root):
+                    return entries, _deny_child_decision(
+                        mapping_src,
+                        mapping_dst,
+                        rel_child,
+                        "symlink resolves outside admitted root",
+                        str(path),
+                    )
+                entries.append(_GovernedEntry(path, rel_child, is_symlink=True))
+
+        for name in filenames:
+            path = current / name
+            rel_child = f"{rel_dir_str}/{name}" if rel_dir_str else name
+
+            child_decision = evaluate_mapping(
+                _child_mapping_path(mapping_src, rel_child),
+                _child_mapping_path(mapping_dst, rel_child),
+                monorepo_base,
+                repo_root,
+            )
+            if not child_decision.admitted:
+                return entries, child_decision
+
+            if path.is_symlink():
+                if _symlink_resolves_outside_root(path, src_root):
+                    return entries, _deny_child_decision(
+                        mapping_src,
+                        mapping_dst,
+                        rel_child,
+                        "symlink resolves outside admitted root",
+                        str(path),
+                    )
+
+            entries.append(_GovernedEntry(path, rel_child, path.is_symlink()))
+
+    return entries, None
+
+
+def _materialize_governed_entries(
+    entries: list[_GovernedEntry],
+    dst_dir: Path,
+) -> None:
+    for entry in entries:
+        dst_path = dst_dir / entry.rel_child
+        dst_path.parent.mkdir(parents=True, exist_ok=True)
+        if entry.is_symlink:
+            dst_path.symlink_to(entry.src_path.readlink())
+        else:
+            shutil.copy2(entry.src_path, dst_path)
+
+
+def governed_copy_mapping(
+    src: str,
+    dst: str,
+    monorepo_base: Path,
+    repo_root: Path,
+) -> AdmissionDecision:
+    """
+    Evaluate and copy one manifest mapping with per-child admission checks.
+
+    Directory copies validate every child path/name before writing anything.
+    Outbound symlinks (resolved target outside the admitted source root) are
+    denied; inbound symlinks are copied as links without following them.
+    """
+    decision = evaluate_mapping(src, dst, monorepo_base, repo_root)
+    if not decision.admitted:
+        return decision
+
+    src_path = Path(decision.resolved_src)
+    dst_path = Path(decision.resolved_dst)
+
+    if not src_path.exists():
+        return decision
+
+    if src_path.is_symlink():
+        if _symlink_resolves_outside_root(src_path, monorepo_base.resolve()):
+            return _deny_child_decision(
+                src,
+                dst,
+                "",
+                "symlink resolves outside admitted root",
+                str(src_path),
+            )
+
+    if dst_path.exists():
+        if dst_path.is_dir():
+            shutil.rmtree(dst_path)
+        else:
+            dst_path.unlink()
+
+    if src_path.is_dir():
+        entries, deny = _collect_governed_entries(
+            src_path,
+            src_path.resolve(),
+            src,
+            dst,
+            monorepo_base,
+            repo_root,
+        )
+        if deny is not None:
+            return deny
+
+        dst_path.mkdir(parents=True, exist_ok=True)
+        _materialize_governed_entries(entries, dst_path)
+        return decision
+
+    if src_path.is_symlink():
+        dst_path.parent.mkdir(parents=True, exist_ok=True)
+        dst_path.symlink_to(src_path.readlink())
+        return decision
+
+    dst_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src_path, dst_path)
+    return decision
