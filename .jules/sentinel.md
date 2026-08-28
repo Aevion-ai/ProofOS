@@ -1,0 +1,4 @@
+## 2025-02-28 - [Path Traversal in Python Path Construction]
+**Vulnerability:** Found a path traversal vulnerability in `.github/workflows/mirror-from-monorepo.yml` where a manifest parsing script constructs path strings from untrusted input and then copies them. Using `Path(".monorepo") / src` will evaluate to the absolute path `/abs` if `src` is `"/abs"` or `../../../` escaping the intended directory.
+**Learning:** Python's `pathlib.Path` concatenation allows absolute paths in strings to bypass the base directory and evaluate to an absolute path, exposing the system to directory traversal attacks when reading from untrusted files.
+**Prevention:** Always strip leading slashes using `.lstrip('/')` before concatenating, resolve the path, and use `pathlib.Path.is_relative_to()` to ensure the final path remains within the intended base directory.
