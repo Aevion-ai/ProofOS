@@ -1,0 +1,4 @@
+## 2026-08-30 - Prevent Path Traversal in Mirror Manifest
+**Vulnerability:** The GitHub Actions mirror workflow (`mirror-from-monorepo.yml`) parsed `MIRROR_MANIFEST.md` and concatenated untrusted paths directly using `Path() / src` and `Path(dst)`. This could allow path traversal if the manifest contained absolute paths (e.g., `/etc/passwd`) or relative directory traversal (`../`).
+**Learning:** In Python, concatenating an absolute path string via the `/` operator (e.g., `Path(base) / '/abs'`) evaluates to the absolute path itself, completely bypassing the intended base directory.
+**Prevention:** Always strip leading slashes (e.g., using `.lstrip('/')`) before concatenating paths from untrusted input, resolve the constructed path using `.resolve()`, and validate it using `pathlib.Path.is_relative_to()` against the allowed base directory.
