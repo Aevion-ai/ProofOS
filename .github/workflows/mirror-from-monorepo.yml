@@ -69,11 +69,29 @@ jobs:
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+
+              # Secure path resolution to prevent path traversal
+              base_src_dir = Path(".monorepo").resolve()
+              src_clean = src.lstrip('/')
+              src_path = (base_src_dir / src_clean).resolve()
+
+              if not src_path.is_relative_to(base_src_dir):
+                  print(f"SKIP: source path traversal detected: {src}")
+                  continue
+
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+
+              base_dst_dir = Path(".").resolve()
+              dst_clean = dst.lstrip('/')
+              dst_path = (base_dst_dir / dst_clean).resolve()
+
+              # Do not allow overwriting files outside the current directory or the .monorepo directory itself
+              if not dst_path.is_relative_to(base_dst_dir) or dst_path.is_relative_to(base_src_dir):
+                  print(f"SKIP: destination path traversal detected: {dst}")
+                  continue
+
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()

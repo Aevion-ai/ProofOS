@@ -1,0 +1,4 @@
+## 2024-05-24 - Path Traversal in Manifest Parsing
+**Vulnerability:** The Python script within the .github/workflows/mirror-from-monorepo.yml file parses paths from MIRROR_MANIFEST.md without stripping leading slashes or validating the paths. It simply concatenates them: `Path(".monorepo") / src` and `Path(dst)`.
+**Learning:** In Python's pathlib, if `src` is an absolute path string (starts with `/`), concatenating it to a Path object via the `/` operator overrides the base path completely, resulting in just the absolute path `src`. This allows an attacker who can modify `MIRROR_MANIFEST.md` in the monorepo to write files anywhere on the system during the mirror sync process.
+**Prevention:** Always strip leading slashes from untrusted path inputs before concatenation (e.g., using `src.lstrip('/')`). Then, resolve the combined path and validate it against the intended base directory using `pathlib.Path.is_relative_to()`.
