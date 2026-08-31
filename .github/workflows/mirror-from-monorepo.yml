@@ -84,12 +84,24 @@ jobs:
                   continue
 
               base_dst_dir = Path(".").resolve()
-              dst_clean = dst.lstrip('/')
+              dst_clean = dst.strip().lstrip('/')
               dst_path = (base_dst_dir / dst_clean).resolve()
 
+              # 1. Reject the root itself before any destructive operation.
+              if dst_path == base_dst_dir:
+                  print(f"SKIP: destination resolves to checkout root: {dst}")
+                  continue
+
+              # 2. Existing containment checks.
               # Do not allow overwriting files outside the current directory or the .monorepo directory itself
               if not dst_path.is_relative_to(base_dst_dir) or dst_path.is_relative_to(base_src_dir):
                   print(f"SKIP: destination path traversal detected: {dst}")
+                  continue
+
+              # 3. Protect the control plane, which is inside containment by construction.
+              PROTECTED = {".git", ".github", ".jules"}
+              if dst_path.relative_to(base_dst_dir).parts[0] in PROTECTED:
+                  print(f"SKIP: destination targets protected path: {dst}")
                   continue
 
               print(f"COPY: {src} -> {dst}")
