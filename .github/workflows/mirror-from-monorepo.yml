@@ -40,6 +40,9 @@ jobs:
           path: .monorepo
           token: ${{ secrets.MONOREPO_MIRROR_TOKEN }}
           fetch-depth: 1
+          # Do not write the PAT into .monorepo/.git/config: this repository is
+          # public and the workflow commits and pushes its working tree.
+          persist-credentials: false
 
       - name: Sync allow-listed paths
         id: sync
@@ -50,7 +53,13 @@ jobs:
           import re
           import shutil
           import subprocess
+          import sys
           from pathlib import Path
+
+          # The admission guard is a committed module so that the tests exercise
+          # the artifact this workflow actually runs.
+          sys.path.insert(0, str(Path.cwd()))
+          from scripts.mirror_paths import resolve_dst, resolve_src
 
           source_sha = subprocess.check_output(
               ["git", "-C", ".monorepo", "rev-parse", "HEAD"], text=True
@@ -70,38 +79,21 @@ jobs:
                   continue
               src, dst = m.group(1), m.group(2)
 
-              # Secure path resolution to prevent path traversal
               base_src_dir = Path(".monorepo").resolve()
-              src_clean = src.lstrip('/')
-              src_path = (base_src_dir / src_clean).resolve()
+              base_dst_dir = Path(".").resolve()
 
-              if not src_path.is_relative_to(base_src_dir):
-                  print(f"SKIP: source path traversal detected: {src}")
+              src_path, reason = resolve_src(src, base_src_dir)
+              if src_path is None:
+                  print(f"SKIP: {reason}")
                   continue
 
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
 
-              base_dst_dir = Path(".").resolve()
-              dst_clean = dst.strip().lstrip('/')
-              dst_path = (base_dst_dir / dst_clean).resolve()
-
-              # 1. Reject the root itself before any destructive operation.
-              if dst_path == base_dst_dir:
-                  print(f"SKIP: destination resolves to checkout root: {dst}")
-                  continue
-
-              # 2. Existing containment checks.
-              # Do not allow overwriting files outside the current directory or the .monorepo directory itself
-              if not dst_path.is_relative_to(base_dst_dir) or dst_path.is_relative_to(base_src_dir):
-                  print(f"SKIP: destination path traversal detected: {dst}")
-                  continue
-
-              # 3. Protect the control plane, which is inside containment by construction.
-              PROTECTED = {".git", ".github", ".jules"}
-              if dst_path.relative_to(base_dst_dir).parts[0] in PROTECTED:
-                  print(f"SKIP: destination targets protected path: {dst}")
+              dst_path, reason = resolve_dst(dst, base_dst_dir, base_src_dir)
+              if dst_path is None:
+                  print(f"SKIP: {reason}")
                   continue
 
               print(f"COPY: {src} -> {dst}")
