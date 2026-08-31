@@ -1,0 +1,4 @@
+## 2024-05-18 - Path Traversal in Pathlib Concatenation
+**Vulnerability:** A vulnerability was found in a Python script within a GitHub Actions workflow where untrusted paths from a manifest file were concatenated directly using `Path(base) / src`. Absolute paths (e.g. `/etc/passwd`) or traversals (e.g. `../../etc/passwd`) bypass the intended base directory.
+**Learning:** Python's `pathlib.Path` operator `/` resolves to the right-hand side if the right-hand side is an absolute path. The manifest content must be strictly validated before processing to prevent arbitrary file read/write issues.
+**Prevention:** Always strip leading slashes using `.lstrip('/')`, resolve the full path with `.resolve()`, and validate it using `.is_relative_to(base_directory.resolve())` before accessing the file system.
