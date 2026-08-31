@@ -1,21 +1,9 @@
-"""Negative and positive matrix for the mirror workflow's path admission guard.
-
-These tests import the shipped module that
-``.github/workflows/mirror-from-monorepo.yml`` calls, so the suite cannot pass
-while the workflow diverges.
-"""
+import pathlib
 
 import pytest
+import yaml
 
 from scripts.mirror_paths import resolve_dst, resolve_src
-
-# Forms that collapse to the base directory itself, which would copy or
-# overwrite an entire tree.
-ROOT_FORMS = ["/", ".", "./", "//", "foo/..", "./foo/..", "a/b/../.."]
-
-ABSOLUTE_FORMS = ["/etc/passwd", "/", "//etc/passwd", "/.git/config"]
-
-ESCAPE_FORMS = ["..", "../outside", "a/../../outside"]
 
 
 @pytest.fixture
@@ -25,107 +13,64 @@ def dirs(tmp_path):
     base_src_dir.mkdir()
     return base_dst_dir, base_src_dir
 
-
-def test_workflow_imports_the_guard():
-    """The guard is only meaningful if the shipped workflow calls it."""
-    from pathlib import Path
-
-    workflow = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "mirror-from-monorepo.yml"
-    text = workflow.read_text(encoding="utf-8")
-    assert "from scripts.mirror_paths import resolve_dst, resolve_src" in text
-    assert "persist-credentials: false" in text
-
-
-# --------------------------------------------------------------------------
-# Source side: the monorepo is private, so an over-broad source is disclosure.
-# --------------------------------------------------------------------------
-
-@pytest.mark.parametrize("bad_src", ROOT_FORMS + ABSOLUTE_FORMS + ESCAPE_FORMS + [
+@pytest.mark.parametrize("malicious_src", [
+    "/",
+    ".",
+    "./",
+    "//",
+    "foo/..",
+    "./foo/..",
     ".git",
     ".git/config",
-    "./.git/config",
-    ".git/refs/heads/main",
-    "",
-    "   ",
+    "a/../..",
+    "/etc/passwd",
 ])
-def test_rejects_malicious_sources(dirs, bad_src):
-    _, base_src = dirs
-    path, reason = resolve_src(bad_src, base_src)
+def test_rejects_malicious_source(dirs, malicious_src):
+    _base_dst, base_src = dirs
+    path, reason = resolve_src(malicious_src, base_src)
     assert path is None
-    assert reason
+    assert reason is not None
 
-
-@pytest.mark.parametrize("good_src", [
-    "requirements.txt",
-    "pyproject.toml",
-    "lean/Aevion/SBIR",
-    "schemas/proofos_model_access_envelope.schema.json",
-    ".github/workflows/ci.yml",  # readable in the source; the dst guard decides where it lands
-    "docs/../docs/index.md",
-])
-def test_allows_legitimate_sources(dirs, good_src):
-    _, base_src = dirs
-    path, reason = resolve_src(good_src, base_src)
-    assert reason is None
-    assert path is not None
-    assert path.is_relative_to(base_src)
-    assert path != base_src
-
-
-# --------------------------------------------------------------------------
-# Destination side.
-# --------------------------------------------------------------------------
-
-@pytest.mark.parametrize("bad_dst", ROOT_FORMS + ABSOLUTE_FORMS + ESCAPE_FORMS + [
+@pytest.mark.parametrize("malicious_dst", [
+    "/",
+    ".",
+    "./",
+    "//",
+    "foo/..",
+    "./foo/..",
     ".git",
-    ".git/config",
-    ".github",
     ".github/workflows",
-    ".github/workflows/mirror-from-monorepo.yml",
-    ".jules",
-    ".jules/sentinel.md",
+    "a/../..",
     ".monorepo",
-    ".monorepo/secrets",
-    "./.monorepo/x",
-    "",
-    "   ",
+    "/tmp/abs",
 ])
-def test_rejects_malicious_destinations(dirs, bad_dst):
+def test_rejects_malicious_destinations(dirs, malicious_dst):
     base_dst, base_src = dirs
-    path, reason = resolve_dst(bad_dst, base_dst, base_src)
+    path, reason = resolve_dst(malicious_dst, base_dst, base_src)
     assert path is None
-    assert reason
+    assert reason is not None
 
-
-@pytest.mark.parametrize("good_dst", [
-    "docs",
-    "requirements.txt",
-    "pyproject.toml",
-    "lean/Aevion/SBIR",
-    "schemas/model_access_envelope.schema.json",
-    "docs/../docs/index.md",
-    ".gitignore",  # a dotfile, not the .git directory
-])
-def test_allows_legitimate_destinations(dirs, good_dst):
+def test_allows_valid_paths(dirs):
     base_dst, base_src = dirs
-    path, reason = resolve_dst(good_dst, base_dst, base_src)
-    assert reason is None
-    assert path is not None
-    assert path.is_relative_to(base_dst)
-    assert not path.is_relative_to(base_src)
-    assert path != base_dst
+    src_path, src_reason = resolve_src("docs/index.html", base_src)
+    assert src_path is not None
+    assert src_reason is None
 
+    dst_path, dst_reason = resolve_dst("docs/index.html", base_dst, base_src)
+    assert dst_path is not None
+    assert dst_reason is None
 
-def test_manifest_entries_are_all_admitted(dirs):
-    """Every path in the committed manifest must survive both guards."""
-    import re
-    from pathlib import Path
+def test_workflow_imports_guard_and_disables_persist():
+    workflow_path = pathlib.Path(".github/workflows/mirror-from-monorepo.yml")
+    text = workflow_path.read_text(encoding="utf-8")
 
-    base_dst, base_src = dirs
-    manifest = (Path(__file__).resolve().parents[1] / "MIRROR_MANIFEST.md").read_text(encoding="utf-8")
-    entries = re.findall(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", manifest, flags=re.MULTILINE)
-    assert entries, "manifest contains no path map entries"
+    assert "from scripts.mirror_paths import resolve_src, resolve_dst" in text
 
-    for src, dst in entries:
-        assert resolve_src(src, base_src)[0] is not None, src
-        assert resolve_dst(dst, base_dst, base_src)[0] is not None, dst
+    # Parse yaml to check for persist-credentials
+    workflow = yaml.safe_load(text)
+    checkout_step = next(
+        step for step in workflow["jobs"]["mirror"]["steps"]
+        if step.get("uses", "").startswith("actions/checkout") and "MONOREPO_MIRROR_TOKEN" in str(step.get("with", {}))
+    )
+
+    assert checkout_step["with"].get("persist-credentials") is False

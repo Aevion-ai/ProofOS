@@ -39,13 +39,13 @@ jobs:
           repository: Aevion-ai/Aevion-Verifiable-AI
           path: .monorepo
           token: ${{ secrets.MONOREPO_MIRROR_TOKEN }}
-          fetch-depth: 1
-          # Do not write the PAT into .monorepo/.git/config: this repository is
-          # public and the workflow commits and pushes its working tree.
           persist-credentials: false
+          fetch-depth: 1
 
       - name: Sync allow-listed paths
         id: sync
+        env:
+          PYTHONPATH: .
         run: |
           python3 - <<'PY'
           import datetime as dt
@@ -53,13 +53,8 @@ jobs:
           import re
           import shutil
           import subprocess
-          import sys
           from pathlib import Path
-
-          # The admission guard is a committed module so that the tests exercise
-          # the artifact this workflow actually runs.
-          sys.path.insert(0, str(Path.cwd()))
-          from scripts.mirror_paths import resolve_dst, resolve_src
+          from scripts.mirror_paths import resolve_src, resolve_dst
 
           source_sha = subprocess.check_output(
               ["git", "-C", ".monorepo", "rev-parse", "HEAD"], text=True
@@ -73,30 +68,30 @@ jobs:
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
 
+          base_src_dir = Path(".monorepo").resolve()
+          base_dst_dir = Path(".").resolve()
+
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
-              src, dst = m.group(1), m.group(2)
+              raw_src, raw_dst = m.group(1), m.group(2)
 
-              base_src_dir = Path(".monorepo").resolve()
-              base_dst_dir = Path(".").resolve()
-
-              src_path, reason = resolve_src(src, base_src_dir)
-              if src_path is None:
-                  print(f"SKIP: {reason}")
+              src_path, src_reason = resolve_src(raw_src, base_src_dir)
+              if not src_path:
+                  print(f"SKIP: {src_reason}")
                   continue
 
               if not src_path.exists():
-                  print(f"SKIP: source not found: {src}")
+                  print(f"SKIP: source not found: {raw_src}")
                   continue
 
-              dst_path, reason = resolve_dst(dst, base_dst_dir, base_src_dir)
-              if dst_path is None:
-                  print(f"SKIP: {reason}")
+              dst_path, dst_reason = resolve_dst(raw_dst, base_dst_dir, base_src_dir)
+              if not dst_path:
+                  print(f"SKIP: {dst_reason}")
                   continue
 
-              print(f"COPY: {src} -> {dst}")
+              print(f"COPY: {raw_src} -> {raw_dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
               dst_path.parent.mkdir(parents=True, exist_ok=True)
