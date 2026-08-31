@@ -1,4 +1,5 @@
 import pathlib
+import subprocess
 
 import pytest
 import yaml
@@ -74,3 +75,49 @@ def test_workflow_imports_guard_and_disables_persist():
     )
 
     assert checkout_step["with"].get("persist-credentials") is False
+
+
+def test_monorepo_checkout_path_is_ignored():
+    """The private checkout must not be committable by the workflow's `git add -A`.
+
+    Asserted through git itself rather than by reading .gitignore, so the test
+    fails if the rule is present but ineffective (wrong order, wrong anchor,
+    later negation).
+    """
+    workflow = yaml.safe_load(
+        pathlib.Path(".github/workflows/mirror-from-monorepo.yml").read_text(
+            encoding="utf-8"
+        )
+    )
+    checkout_step = next(
+        step
+        for step in workflow["jobs"]["mirror"]["steps"]
+        if step.get("uses", "").startswith("actions/checkout")
+        and "MONOREPO_MIRROR_TOKEN" in str(step.get("with", {}))
+    )
+    checkout_path = checkout_step["with"]["path"]
+
+    # Two independent failure modes, both of which have actually occurred:
+    #   1. the path is committed as a gitlink, which .gitignore cannot undo
+    #      because git never ignores a tracked path;
+    #   2. the path is untracked but not ignored, so `git add -A` stages it.
+    tracked = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", checkout_path],
+        capture_output=True,
+    )
+    assert tracked.returncode != 0, (
+        f"{checkout_path!r} is tracked in this public repository. It is the "
+        "private monorepo checkout and must never be committed; .gitignore "
+        "has no effect on an already-tracked path, so it must be removed "
+        "with `git rm --cached`."
+    )
+
+    ignored = subprocess.run(
+        ["git", "check-ignore", "-q", checkout_path],
+        capture_output=True,
+    )
+    assert ignored.returncode == 0, (
+        f"the monorepo checkout path {checkout_path!r} is not gitignored, so "
+        "`git add -A` in this public repository will stage it. Note a "
+        "directory-only pattern is not matched while the path is absent."
+    )
