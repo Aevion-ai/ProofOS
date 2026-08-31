@@ -39,10 +39,13 @@ jobs:
           repository: Aevion-ai/Aevion-Verifiable-AI
           path: .monorepo
           token: ${{ secrets.MONOREPO_MIRROR_TOKEN }}
+          persist-credentials: false
           fetch-depth: 1
 
       - name: Sync allow-listed paths
         id: sync
+        env:
+          PYTHONPATH: .
         run: |
           python3 - <<'PY'
           import datetime as dt
@@ -51,6 +54,7 @@ jobs:
           import shutil
           import subprocess
           from pathlib import Path
+          from scripts.mirror_paths import resolve_src, resolve_dst
 
           source_sha = subprocess.check_output(
               ["git", "-C", ".monorepo", "rev-parse", "HEAD"], text=True
@@ -64,17 +68,30 @@ jobs:
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
 
+          base_src_dir = Path(".monorepo").resolve()
+          base_dst_dir = Path(".").resolve()
+
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
-              src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
-              if not src_path.exists():
-                  print(f"SKIP: source not found: {src}")
+              raw_src, raw_dst = m.group(1), m.group(2)
+
+              src_path, src_reason = resolve_src(raw_src, base_src_dir)
+              if not src_path:
+                  print(f"SKIP: {src_reason}")
                   continue
-              dst_path = Path(dst)
-              print(f"COPY: {src} -> {dst}")
+
+              if not src_path.exists():
+                  print(f"SKIP: source not found: {raw_src}")
+                  continue
+
+              dst_path, dst_reason = resolve_dst(raw_dst, base_dst_dir, base_src_dir)
+              if not dst_path:
+                  print(f"SKIP: {dst_reason}")
+                  continue
+
+              print(f"COPY: {raw_src} -> {raw_dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
               dst_path.parent.mkdir(parents=True, exist_ok=True)

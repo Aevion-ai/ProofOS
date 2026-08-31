@@ -6,3 +6,16 @@ node_modules/
 lake-packages/
 e2e/screenshots/
 test-results/
+
+# The mirror workflow checks the PRIVATE monorepo out here, then runs
+# `git add -A` in this PUBLIC repository. Because that checkout carries its
+# own .git, git currently stages it as a gitlink rather than as files, so the
+# private source is not published today - but the private HEAD sha is, and a
+# bogus submodule entry lands on main. That safety depends entirely on
+# .monorepo/.git existing. Ignoring the path removes the dependency instead
+# of relying on it.
+#
+# No trailing slash: a directory-only pattern ("<name>/") is not reported as
+# ignored when the path does not exist yet, which would leave the rule
+# unverifiable in a clean checkout.
+.monorepo
