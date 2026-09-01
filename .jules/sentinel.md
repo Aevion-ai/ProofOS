@@ -1,0 +1,4 @@
+## 2024-09-01 - [Path Traversal in Monorepo Mirror Script]
+**Vulnerability:** The mirror workflow script in `.github/workflows/mirror-from-monorepo.yml` constructed file paths from the manifest directly into the local workspace without resolving and validating that they remained within the repository root or verifying they did not overwrite critical directories (like `.git/` or `.github/`).
+**Learning:** Python's `Path` and `shutil` operations can resolve absolute paths or traverse up directories (`../`) if given malicious or malformed input from an external manifest.
+**Prevention:** Always use `.lstrip('/')`, resolve constructed paths to absolute paths, and use `is_relative_to(root)` to validate that the output remains strictly within the intended boundaries. Add a denylist to prevent writes to control plane directories.

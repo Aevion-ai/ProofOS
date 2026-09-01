@@ -64,16 +64,37 @@ jobs:
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
 
+          monorepo_root = Path(".monorepo").resolve()
+          dst_root = Path(".").resolve()
+          denylist = {".git", ".github", ".jules"}
+
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+
+              # Prevent path traversal vulnerabilities by validating paths remain within roots
+              # and explicitly rejecting exact root matches and denylist directories.
+              src_path = (Path(".monorepo") / src.lstrip("/")).resolve()
+              if not src_path.is_relative_to(monorepo_root) or src_path == monorepo_root:
+                  print(f"SKIP: source path traversal detected: {src}")
+                  continue
+
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+
+              dst_path = (Path(".") / dst.lstrip("/")).resolve()
+              if not dst_path.is_relative_to(dst_root) or dst_path == dst_root:
+                  print(f"SKIP: destination path traversal detected: {dst}")
+                  continue
+
+              # Denylist critical directories
+              if any(part in denylist for part in dst_path.relative_to(dst_root).parts):
+                  print(f"SKIP: destination targets protected directory: {dst}")
+                  continue
+
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
