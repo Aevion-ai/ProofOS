@@ -1,0 +1,3 @@
+## 2024-09-02 - Enum method optimization with cached mapping
+**Learning:** Recreating a dictionary containing enum keys on every comparison inside `__ge__` and `__gt__` causes significant unnecessary overhead. In this codebase's architecture where Enums inherit from `str`, instance methods are slightly faster than external dynamic patch for type-checking semantic, but mapping lookup must be cached as a module-level constant defined below the class.
+**Action:** Extract dictionary mappings for Enums to module-level constants and define them right after the class, rather than recreating them dynamically inside the class methods. Ensure to use the enum instance (`self`) directly as the key.
