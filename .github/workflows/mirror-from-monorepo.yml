@@ -69,11 +69,28 @@ jobs:
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+              monorepo_root = Path(".monorepo").resolve()
+              src_path = (Path(".monorepo") / src.lstrip("/")).resolve()
+
+              if not src_path.is_relative_to(monorepo_root):
+                  print(f"SKIP: traversal attempt in source: {src}")
+                  continue
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+
+              cwd = Path.cwd().resolve()
+              dst_path = (Path.cwd() / dst.lstrip("/")).resolve()
+
+              if not dst_path.is_relative_to(cwd) or dst_path == cwd:
+                  print(f"SKIP: traversal attempt in dest: {dst}")
+                  continue
+
+              deny = {".git", ".github", ".jules"}
+              if any(part in dst_path.parts for part in deny):
+                  print(f"SKIP: dest path in denylist: {dst}")
+                  continue
+
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
