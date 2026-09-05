@@ -64,16 +64,37 @@ jobs:
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
 
+          monorepo_root = Path(".monorepo").resolve()
+          repo_root = Path().resolve()
+
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+              src_clean = src.lstrip('/')
+              dst_clean = dst.lstrip('/')
+
+              src_path = (monorepo_root / src_clean).resolve()
+              dst_path = (repo_root / dst_clean).resolve()
+
+              if not src_path.is_relative_to(monorepo_root) or src_path == monorepo_root:
+                  print(f"SKIP: invalid source path: {src}")
+                  continue
+              if not dst_path.is_relative_to(repo_root) or dst_path == repo_root:
+                  print(f"SKIP: invalid destination path: {dst}")
+                  continue
+
+              denylist = {'.git', '.github', '.jules'}
+              if any(p in denylist for p in src_path.relative_to(monorepo_root).parts) or \
+                 any(p in denylist for p in dst_path.relative_to(repo_root).parts):
+                  print(f"SKIP: path traverses restricted directory: {src} -> {dst}")
+                  continue
+
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
