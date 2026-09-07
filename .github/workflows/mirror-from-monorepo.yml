@@ -69,11 +69,30 @@ jobs:
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+
+              src_clean = src.lstrip("/")
+              src_path = (Path(".monorepo") / src_clean).resolve()
+              monorepo_root = Path(".monorepo").resolve()
+              if not src_path.is_relative_to(monorepo_root) or src_path == monorepo_root:
+                  print(f"SKIP: invalid source path: {src}")
+                  continue
+
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+
+              dst_clean = dst.lstrip("/")
+              dst_path = Path(dst_clean).resolve()
+              repo_root = Path.cwd().resolve()
+              if not dst_path.is_relative_to(repo_root) or dst_path == repo_root:
+                  print(f"SKIP: invalid destination path: {dst}")
+                  continue
+
+              denylist = [".git", ".github", ".jules"]
+              if any(part in denylist for part in dst_path.relative_to(repo_root).parts):
+                  print(f"SKIP: forbidden destination path: {dst}")
+                  continue
+
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
