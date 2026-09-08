@@ -64,16 +64,38 @@ jobs:
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
 
+          monorepo_base = Path(".monorepo").resolve()
+          repo_base = Path(".").resolve()
+          deny_list = {".git", ".github", ".jules", ".monorepo"}
+
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
-              src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+              src, dst = m.group(1).lstrip('/'), m.group(2).lstrip('/')
+
+              src_path = (Path(".monorepo") / src).resolve()
+              if not src_path.is_relative_to(monorepo_base) or src_path == monorepo_base:
+                  print(f"SKIP: invalid source path: {src}")
+                  continue
+
+              dst_path = Path(dst).resolve()
+              if not dst_path.is_relative_to(repo_base) or dst_path == repo_base:
+                  print(f"SKIP: invalid destination path: {dst}")
+                  continue
+
+              try:
+                  first_part = dst_path.relative_to(repo_base).parts[0]
+                  if first_part in deny_list:
+                      print(f"SKIP: destination in denylist: {dst}")
+                      continue
+              except IndexError:
+                  pass
+
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
