@@ -64,16 +64,49 @@ jobs:
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
 
+          base_src_dir = Path(".monorepo").resolve()
+          base_dst_dir = Path(".").resolve()
+          sensitive_dirs = {'.git', '.github', '.jules'}
+
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+
+              # Strip leading slashes to prevent absolute path override
+              src_stripped = src.lstrip('/')
+              dst_stripped = dst.lstrip('/')
+
+              src_candidate = Path(".monorepo") / src_stripped
+              if src_candidate.is_symlink():
+                  raise RuntimeError(f"refusing symlink source: {src}")
+              src_path = src_candidate.resolve()
+
+              if not src_path.is_relative_to(base_src_dir) or src_path == base_src_dir:
+                  print(f"SKIP: invalid source path: {src}")
+                  continue
+
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+
+              if src_path.is_dir():
+                  nested_symlinks = [p for p in src_path.rglob("*") if p.is_symlink()]
+                  if nested_symlinks:
+                      rel = [str(p.relative_to(base_src_dir)) for p in nested_symlinks[:10]]
+                      raise RuntimeError(f"refusing source tree containing symlinks: {rel}")
+
+              dst_path = (Path(".") / dst_stripped).resolve()
+
+              if not dst_path.is_relative_to(base_dst_dir) or dst_path == base_dst_dir:
+                  print(f"SKIP: invalid destination path: {dst}")
+                  continue
+
+              if any(p in sensitive_dirs for p in src_path.parts) or any(p in sensitive_dirs for p in dst_path.parts):
+                  print(f"SKIP: path traverses sensitive directory")
+                  continue
+
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
