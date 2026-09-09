@@ -78,7 +78,10 @@ jobs:
               src_stripped = src.lstrip('/')
               dst_stripped = dst.lstrip('/')
 
-              src_path = (Path(".monorepo") / src_stripped).resolve()
+              src_candidate = Path(".monorepo") / src_stripped
+              if src_candidate.is_symlink():
+                  raise RuntimeError(f"refusing symlink source: {src}")
+              src_path = src_candidate.resolve()
 
               if not src_path.is_relative_to(base_src_dir) or src_path == base_src_dir:
                   print(f"SKIP: invalid source path: {src}")
@@ -87,6 +90,12 @@ jobs:
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
+
+              if src_path.is_dir():
+                  nested_symlinks = [p for p in src_path.rglob("*") if p.is_symlink()]
+                  if nested_symlinks:
+                      rel = [str(p.relative_to(base_src_dir)) for p in nested_symlinks[:10]]
+                      raise RuntimeError(f"refusing source tree containing symlinks: {rel}")
 
               dst_path = (Path(".") / dst_stripped).resolve()
 
