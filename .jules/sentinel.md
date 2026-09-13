@@ -1,0 +1,4 @@
+## 2026-06-10 - Path Traversal in Sync Workflow
+**Vulnerability:** The GitHub Action `.github/workflows/mirror-from-monorepo.yml` parsed `MIRROR_MANIFEST.md` and used `dst` values directly in `Path(dst)` without checking for absolute path overrides or path traversals escaping the base directory.
+**Learning:** `Path()` in Python treats inputs starting with `/` as absolute paths, bypassing the base directory when concatenated or used. This could allow a malicious PR modifying the manifest to overwrite `.git/config` or GitHub Actions workflows.
+**Prevention:** Strip leading slashes using `.lstrip('/')`, resolve the constructed path using `.resolve()`, explicitly check `.is_relative_to(base_dir)`, reject paths exactly equal to `base_dir`, and apply denylists for sensitive directories (e.g., `.git`, `.github`, `.jules`, `.monorepo`).
