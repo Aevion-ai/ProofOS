@@ -39,18 +39,24 @@ jobs:
           repository: Aevion-ai/Aevion-Verifiable-AI
           path: .monorepo
           token: ${{ secrets.MONOREPO_MIRROR_TOKEN }}
+          # Without this the PAT is written to .monorepo/.git/config and stays
+          # on the runner for every later step to read.
+          persist-credentials: false
           fetch-depth: 1
 
       - name: Sync allow-listed paths
         id: sync
+        env:
+          PYTHONPATH: .
         run: |
           python3 - <<'PY'
           import datetime as dt
           import os
           import re
-          import shutil
           import subprocess
           from pathlib import Path
+
+          from scripts.mirror_paths import copy_source_tree, resolve_src, resolve_dst
 
           source_sha = subprocess.check_output(
               ["git", "-C", ".monorepo", "rev-parse", "HEAD"], text=True
@@ -64,57 +70,40 @@ jobs:
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
 
+          # Guards live in scripts/mirror_paths.py and are unit-tested in
+          # tests/test_mirror_manifest.py: resolve_* constrains where a mapping
+          # may point, copy_source_tree scans the CONTENTS of an admitted tree
+          # (nested .git, symlinks, credential-shaped files) and only then
+          # touches the destination.
           base_src_dir = Path(".monorepo").resolve()
           base_dst_dir = Path(".").resolve()
-          sensitive_dirs = {'.git', '.github', '.jules'}
 
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
-              src, dst = m.group(1), m.group(2)
+              raw_src, raw_dst = m.group(1), m.group(2)
 
-              # Strip leading slashes to prevent absolute path override
-              src_stripped = src.lstrip('/')
-              dst_stripped = dst.lstrip('/')
-
-              src_candidate = Path(".monorepo") / src_stripped
-              if src_candidate.is_symlink():
-                  raise RuntimeError(f"refusing symlink source: {src}")
-              src_path = src_candidate.resolve()
-
-              if not src_path.is_relative_to(base_src_dir) or src_path == base_src_dir:
-                  print(f"SKIP: invalid source path: {src}")
+              src_path, src_reason = resolve_src(raw_src, base_src_dir)
+              if not src_path:
+                  print(f"SKIP: {src_reason}")
                   continue
 
               if not src_path.exists():
-                  print(f"SKIP: source not found: {src}")
+                  print(f"SKIP: source not found: {raw_src}")
                   continue
 
-              if src_path.is_dir():
-                  nested_symlinks = [p for p in src_path.rglob("*") if p.is_symlink()]
-                  if nested_symlinks:
-                      rel = [str(p.relative_to(base_src_dir)) for p in nested_symlinks[:10]]
-                      raise RuntimeError(f"refusing source tree containing symlinks: {rel}")
-
-              dst_path = (Path(".") / dst_stripped).resolve()
-
-              if not dst_path.is_relative_to(base_dst_dir) or dst_path == base_dst_dir:
-                  print(f"SKIP: invalid destination path: {dst}")
+              dst_path, dst_reason = resolve_dst(raw_dst, base_dst_dir, base_src_dir)
+              if not dst_path:
+                  print(f"SKIP: {dst_reason}")
                   continue
 
-              if any(p in sensitive_dirs for p in src_path.parts) or any(p in sensitive_dirs for p in dst_path.parts):
-                  print(f"SKIP: path traverses sensitive directory")
+              copy_reason = copy_source_tree(src_path, dst_path)
+              if copy_reason:
+                  print(f"SKIP: {copy_reason}")
                   continue
 
-              print(f"COPY: {src} -> {dst}")
-              if dst_path.exists():
-                  shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
-              dst_path.parent.mkdir(parents=True, exist_ok=True)
-              if src_path.is_dir():
-                  shutil.copytree(src_path, dst_path)
-              else:
-                  shutil.copy2(src_path, dst_path)
+              print(f"COPY: {raw_src} -> {raw_dst}")
 
           text = re.sub(
               r"^(\| `source_commit` \| `)[^`]*(` \|)$",
