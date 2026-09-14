@@ -68,12 +68,31 @@ jobs:
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
-              src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+
+              src = m.group(1).lstrip("/")
+              dst = m.group(2).lstrip("/")
+
+              base_src = Path(".monorepo").resolve()
+              src_path = (Path(".monorepo") / src).resolve()
+              if not src_path.is_relative_to(base_src) or src_path == base_src:
+                  print(f"SKIP: invalid source path: {src}")
+                  continue
+
+              repo_root = Path().resolve()
+              dst_path = Path(dst).resolve()
+              if not dst_path.is_relative_to(repo_root) or dst_path == repo_root:
+                  print(f"SKIP: invalid destination path: {dst}")
+                  continue
+
+              rel_dst = dst_path.relative_to(repo_root)
+              if len(rel_dst.parts) > 0 and rel_dst.parts[0] in (".git", ".github", ".jules"):
+                  print(f"SKIP: destination path is in a restricted directory: {dst}")
+                  continue
+
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
