@@ -64,22 +64,74 @@ jobs:
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
 
+          RESTRICTED_PARTS = {".git", ".github", ".jules", ".monorepo", ".gitmodules", ".gitattributes"}
+
+          def is_restricted_part(parts: tuple[str, ...]) -> bool:
+              return any(part in RESTRICTED_PARTS or part.startswith(".git") for part in parts)
+
+          def validate_mirror_path(base_dir: Path, rel_str: str) -> Path | None:
+              raw = rel_str.strip()
+              if not raw:
+                  return None
+              # Reject absolute paths (POSIX leading slash, Windows drive or UNC)
+              if raw.startswith(("/", "\\")) or ":" in raw[:3] or Path(raw).is_absolute():
+                  return None
+              raw_parts = Path(raw).parts
+              if ".." in raw_parts or is_restricted_part(raw_parts):
+                  return None
+              base_res = base_dir.resolve()
+              cand_res = (base_dir / raw).resolve()
+              if not cand_res.is_relative_to(base_res) or cand_res == base_res:
+                  return None
+              rel_res = cand_res.relative_to(base_res)
+              if is_restricted_part(rel_res.parts):
+                  return None
+              # Symlink escape check: inspect candidate and intermediate components
+              curr = base_dir / raw
+              try:
+                  while curr.resolve() != base_res:
+                      if curr.is_symlink():
+                          target = curr.resolve()
+                          if not target.is_relative_to(base_res) or is_restricted_part(target.relative_to(base_res).parts):
+                              return None
+                      if curr.parent == curr:
+                          break
+                      curr = curr.parent
+              except (OSError, ValueError):
+                  return None
+              return cand_res
+
+          base_src = Path(".monorepo")
+          repo_root = Path(".")
+
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
-              src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
-              if not src_path.exists():
-                  print(f"SKIP: source not found: {src}")
+
+              src_str = m.group(1)
+              dst_str = m.group(2)
+
+              src_path = validate_mirror_path(base_src, src_str)
+              if src_path is None:
+                  print(f"SKIP: source path rejected by security policy: {src_str}")
                   continue
-              dst_path = Path(dst)
-              print(f"COPY: {src} -> {dst}")
+
+              dst_path = validate_mirror_path(repo_root, dst_str)
+              if dst_path is None:
+                  print(f"SKIP: destination path rejected by security policy: {dst_str}")
+                  continue
+
+              if not src_path.exists():
+                  print(f"SKIP: source not found: {src_str}")
+                  continue
+
+              print(f"COPY: {src_str} -> {dst_str}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
               dst_path.parent.mkdir(parents=True, exist_ok=True)
               if src_path.is_dir():
-                  shutil.copytree(src_path, dst_path)
+                  shutil.copytree(src_path, dst_path, symlinks=False)
               else:
                   shutil.copy2(src_path, dst_path)
 
