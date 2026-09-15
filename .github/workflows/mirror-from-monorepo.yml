@@ -73,7 +73,23 @@ jobs:
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+
+              base_dir = Path.cwd().resolve()
+              dst_clean = dst.lstrip('/')
+              dst_path = (base_dir / dst_clean).resolve()
+
+              if not dst_path.is_relative_to(base_dir):
+                  print(f"SKIP: destination {dst} resolves outside repository root")
+                  continue
+              if dst_path == base_dir:
+                  print(f"SKIP: destination {dst} resolves exactly to repository root")
+                  continue
+
+              rel_parts = dst_path.relative_to(base_dir).parts
+              if rel_parts and rel_parts[0] in {'.git', '.github', '.jules', '.monorepo'}:
+                  print(f"SKIP: destination {dst} targets protected directory")
+                  continue
+
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
