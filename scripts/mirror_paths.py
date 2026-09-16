@@ -10,7 +10,7 @@ Every rejection is returned as an explicit reason string; a caller that gets a
 ``None`` path must not copy anything.
 """
 
-from pathlib import Path, PurePosixPath, PureWindowsPath
+from pathlib import Path, PureWindowsPath
 from typing import Optional, Tuple
 
 # Control-plane directories that may never be written in the mirror checkout
@@ -74,21 +74,25 @@ def resolve_src(raw: str, base_src_dir: Path) -> Decision:
 def resolve_dst(raw: str, base_dst_dir: Path, base_src_dir: Optional[Path] = None) -> Decision:
     """Admit a manifest destination path inside the public mirror checkout."""
     base_dst_dir = Path(base_dst_dir).resolve()
+
+    # Reject if destination or any ancestor in the relative path is a symlink.
+    # We inspect this *before* _resolve_within so that an escaping symlink
+    # correctly returns SYMLINK_DESTINATION_NOT_PERMITTED rather than a generic
+    # PATH_TRAVERSAL_NOT_PERMITTED.
+    candidate = raw.strip()
+    if candidate and not is_absolute_request(candidate):
+        current = base_dst_dir
+        for part in Path(candidate).parts:
+            if part == '..':
+                current = current.parent
+            elif part != '.':
+                current = current / part
+                if current.is_symlink():
+                    return None, f"FAIL: SYMLINK_DESTINATION_NOT_PERMITTED: {raw}"
+
     resolved, reason = _resolve_within(raw, base_dst_dir)
     if resolved is None:
         return None, reason
-
-    # Reject if destination or any ancestor in the relative path is a symlink.
-    # This prevents writes from escaping or overwriting unrelated in-repo files
-    # if the manifest destination targets an existing symlink.
-    current = base_dst_dir
-    for part in Path(raw.strip()).parts:
-        if part == '..':
-            current = current.parent
-        elif part != '.':
-            current = current / part
-            if current.is_symlink():
-                return None, f"FAIL: SYMLINK_DESTINATION_NOT_PERMITTED: {raw}"
 
     # The monorepo checkout lives inside the mirror checkout, so containment
     # alone does not exclude it.

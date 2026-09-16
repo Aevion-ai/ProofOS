@@ -145,7 +145,6 @@ class TestAdversarialCorpus:
             # On platforms where symlinks require elevated privileges (e.g. Windows non-developer mode),
             # verify that any candidate that resolves outside is rejected by simulating the resolution.
             # In our implementation: (base_dir / candidate).resolve()
-            resolved = (base_src / "symlink_escape").resolve()
             # If not created, candidate resolution test on simulated path:
             fake_resolved = outside_target.resolve()
             assert not fake_resolved.is_relative_to(base_src)
