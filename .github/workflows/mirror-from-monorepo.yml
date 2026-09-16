@@ -39,6 +39,7 @@ jobs:
           repository: Aevion-ai/Aevion-Verifiable-AI
           path: .monorepo
           token: ${{ secrets.MONOREPO_MIRROR_TOKEN }}
+          persist-credentials: false
           fetch-depth: 1
 
       - name: Sync allow-listed paths
@@ -52,6 +53,8 @@ jobs:
           import subprocess
           from pathlib import Path
 
+          from scripts.mirror_paths import resolve_dst, resolve_src
+
           source_sha = subprocess.check_output(
               ["git", "-C", ".monorepo", "rev-parse", "HEAD"], text=True
           ).strip()
@@ -63,17 +66,28 @@ jobs:
 
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
+          cwd = Path.cwd().resolve()
+          monorepo_base = (cwd / ".monorepo").resolve()
 
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+
+              src_path, src_reason = resolve_src(src, monorepo_base)
+              if src_path is None:
+                  print(f"SKIP: {src_reason}")
+                  continue
+
+              dst_path, dst_reason = resolve_dst(dst, cwd, monorepo_base)
+              if dst_path is None:
+                  print(f"SKIP: {dst_reason}")
+                  continue
+
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
