@@ -126,7 +126,7 @@ class TestAdversarialCorpus:
 
     def test_symlink_inside_root_pointing_outside_root(self, repo_dirs):
         """A symlink located inside root pointing outside root must resolve outside and be rejected."""
-        base_dst, base_src = repo_dirs
+        _, base_src = repo_dirs
         outside_target = base_src.parent / "outside_target.txt"
         outside_target.write_text("classified private data", encoding="utf-8")
 
@@ -149,6 +149,44 @@ class TestAdversarialCorpus:
             # If not created, candidate resolution test on simulated path:
             fake_resolved = outside_target.resolve()
             assert not fake_resolved.is_relative_to(base_src)
+
+    def test_destination_symlink_rejected(self, repo_dirs):
+        """A destination path that is or contains a symlink must be rejected."""
+        base_dst, base_src = repo_dirs
+
+        sibling = base_dst / "sibling.txt"
+        sibling.write_text("sibling")
+        symlink_dest = base_dst / "symlink.txt"
+        try:
+            os.symlink(sibling, symlink_dest)
+            has_symlink_privilege = True
+        except OSError:
+            has_symlink_privilege = False
+
+        if has_symlink_privilege:
+            # 1. Reject destination symlink itself (dst symlink -> sibling file)
+            dst_path, dst_reason = resolve_dst("symlink.txt", base_dst, base_src)
+            assert dst_path is None
+            assert "FAIL: SYMLINK_DESTINATION_NOT_PERMITTED" in dst_reason
+
+            # 2. Reject ancestor symlink (ancestor symlink -> in-repo alternate subtree)
+            alt_dir = base_dst / "alt_dir"
+            alt_dir.mkdir()
+            symlink_dir = base_dst / "symlink_dir"
+            os.symlink(alt_dir, symlink_dir)
+
+            dst_path, dst_reason = resolve_dst("symlink_dir/nested.txt", base_dst, base_src)
+            assert dst_path is None
+            assert "FAIL: SYMLINK_DESTINATION_NOT_PERMITTED" in dst_reason
+
+            # 3. Reject ancestor symlink pointing outside repo
+            outside_dir = base_dst.parent / "outside_dir"
+            outside_dir.mkdir()
+            symlink_ext_dir = base_dst / "symlink_ext_dir"
+            os.symlink(outside_dir, symlink_ext_dir)
+            dst_path, dst_reason = resolve_dst("symlink_ext_dir/nested.txt", base_dst, base_src)
+            assert dst_path is None
+            assert "FAIL: SYMLINK_DESTINATION_NOT_PERMITTED" in dst_reason
 
     @pytest.mark.parametrize("valid_path", [
         "valid/nested/path",

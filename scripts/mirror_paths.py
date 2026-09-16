@@ -11,7 +11,6 @@ Every rejection is returned as an explicit reason string; a caller that gets a
 """
 
 from pathlib import Path, PurePosixPath, PureWindowsPath
-import re
 from typing import Optional, Tuple
 
 # Control-plane directories that may never be written in the mirror checkout
@@ -28,11 +27,7 @@ def is_absolute_request(raw: str) -> bool:
     are considered so that the answer does not depend on which platform evaluates
     the manifest.
     """
-    if raw.startswith(("/", "\\")):
-        return True
-    if bool(re.match(r"^[a-zA-Z]:[\\/]", raw)):
-        return True
-    return PurePosixPath(raw).is_absolute() or PureWindowsPath(raw).is_absolute()
+    return raw.startswith(("/", "\\")) or PureWindowsPath(raw).is_absolute()
 
 
 def _resolve_within(raw: str, base_dir: Path) -> Decision:
@@ -82,6 +77,18 @@ def resolve_dst(raw: str, base_dst_dir: Path, base_src_dir: Optional[Path] = Non
     resolved, reason = _resolve_within(raw, base_dst_dir)
     if resolved is None:
         return None, reason
+
+    # Reject if destination or any ancestor in the relative path is a symlink.
+    # This prevents writes from escaping or overwriting unrelated in-repo files
+    # if the manifest destination targets an existing symlink.
+    current = base_dst_dir
+    for part in Path(raw.strip()).parts:
+        if part == '..':
+            current = current.parent
+        elif part != '.':
+            current = current / part
+            if current.is_symlink():
+                return None, f"FAIL: SYMLINK_DESTINATION_NOT_PERMITTED: {raw}"
 
     # The monorepo checkout lives inside the mirror checkout, so containment
     # alone does not exclude it.
