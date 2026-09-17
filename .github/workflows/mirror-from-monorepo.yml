@@ -68,12 +68,34 @@ jobs:
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
-              src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+              src, dst = m.group(1).lstrip('/'), m.group(2).lstrip('/')
+
+              # Prevent path traversal and overriding sensitive directories
+              src_path = (Path(".monorepo") / src).resolve()
+              dst_path = Path(dst).resolve()
+
+              monorepo_dir = Path(".monorepo").resolve()
+              cwd_dir = Path.cwd().resolve()
+
+              if not src_path.is_relative_to(monorepo_dir) or src_path == monorepo_dir:
+                  print(f"SKIP: invalid source path (traversal): {src}")
+                  continue
+              if not dst_path.is_relative_to(cwd_dir) or dst_path == cwd_dir:
+                  print(f"SKIP: invalid destination path (traversal): {dst}")
+                  continue
+
+              # Deny list for sensitive control-plane directories
+              try:
+                  rel_dst = dst_path.relative_to(cwd_dir)
+                  if rel_dst.parts and rel_dst.parts[0] in (".git", ".github", ".jules"):
+                      print(f"SKIP: invalid destination path (denylist): {dst}")
+                      continue
+              except ValueError:
+                  continue
+
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
