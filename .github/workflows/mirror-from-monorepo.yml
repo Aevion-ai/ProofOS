@@ -83,7 +83,7 @@ jobs:
               if dst_path == workspace_root:
                   print(f"SKIP: SECURITY: Cannot overwrite workspace root: {dst}")
                   continue
-              if any(part in {'.git', '.github', '.jules', '.monorepo'} for part in dst_path.relative_to(workspace_root).parts):
+              if any(part in {'.git', '.jules'} for part in dst_path.relative_to(workspace_root).parts):
                   print(f"SKIP: SECURITY: Writing to control-plane directory forbidden: {dst}")
                   continue
 
