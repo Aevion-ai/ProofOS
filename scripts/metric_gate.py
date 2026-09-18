@@ -42,9 +42,9 @@ def lean_inventory() -> dict:
     theorems = sorries = 0
     for f in files:
         t = f.read_text(encoding="utf-8")
-        t = re.sub(r"/-.*?-/", "", t, flags=re.DOTALL)
+        t = re.sub(r"/-.*?-/", "", t, flags=re.S)
         t = re.sub(r"--.*", "", t)
-        theorems += len(re.findall(r"^\s*theorem\s+\w+", t, flags=re.MULTILINE))
+        theorems += len(re.findall(r"^\s*theorem\s+\w+", t, flags=re.M))
         sorries += len(re.findall(r"\bsorry\b", t))
     return {"files": len(files), "theorems": theorems, "sorries": sorries}
 
@@ -92,11 +92,11 @@ def main() -> int:
     deny = re.compile("|".join(DENYLIST))
     # structural claim patterns: (regex, kind, ceiling)
     claims = [
-        (re.compile(r"([\d,]+)\s*(?:Lean\s*4?\s*)?theorems?", re.IGNORECASE), "theorems", inv["theorems"]),
-        (re.compile(r"(?:across|in)\s*([\d,]+)\s*(?:Lean\s*)?files", re.IGNORECASE), "files", inv["files"]),
-        (re.compile(r"([\d,]+)\s*open obligations", re.IGNORECASE), "open obligations", inv["sorries"] + 1),
+        (re.compile(r"([\d,]+)\s*(?:Lean\s*4?\s*)?theorems?", re.I), "theorems", inv["theorems"]),
+        (re.compile(r"(?:across|in)\s*([\d,]+)\s*(?:Lean\s*)?files", re.I), "files", inv["files"]),
+        (re.compile(r"([\d,]+)\s*open obligations", re.I), "open obligations", inv["sorries"] + 1),
     ]
-    density = re.compile(r"\d+(?:\.\d+)?%\s*(?:proof\s*)?density", re.IGNORECASE)
+    density = re.compile(r"\d+(?:\.\d+)?%\s*(?:proof\s*)?density", re.I)
 
     v: list[str] = []
     for f in iter_surface_files():
