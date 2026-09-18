@@ -73,7 +73,20 @@ jobs:
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+
+              workspace_root = Path.cwd().resolve()
+              dst_path = (workspace_root / dst.lstrip('/')).resolve()
+
+              if not dst_path.is_relative_to(workspace_root):
+                  print(f"SKIP: SECURITY: Path traversal detected: {dst}")
+                  continue
+              if dst_path == workspace_root:
+                  print(f"SKIP: SECURITY: Cannot overwrite workspace root: {dst}")
+                  continue
+              if any(part in {'.git', '.github', '.jules', '.monorepo'} for part in dst_path.relative_to(workspace_root).parts):
+                  print(f"SKIP: SECURITY: Writing to control-plane directory forbidden: {dst}")
+                  continue
+
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
