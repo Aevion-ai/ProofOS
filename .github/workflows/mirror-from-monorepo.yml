@@ -64,17 +64,42 @@ jobs:
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
 
+          cwd = Path.cwd().resolve()
+          monorepo_dir = (cwd / ".monorepo").resolve()
+
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
-              src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
-              if not src_path.exists():
-                  print(f"SKIP: source not found: {src}")
+
+              src_raw, dst_raw = m.group(1).lstrip('/'), m.group(2).lstrip('/')
+
+              src_path = (monorepo_dir / src_raw).resolve()
+              if not src_path.is_relative_to(monorepo_dir) or src_path == monorepo_dir:
+                  print(f"SKIP: invalid source path {src_raw}")
                   continue
-              dst_path = Path(dst)
-              print(f"COPY: {src} -> {dst}")
+
+              if not src_path.exists():
+                  print(f"SKIP: source not found: {src_raw}")
+                  continue
+
+              dst_path = (cwd / dst_raw).resolve()
+              if not dst_path.is_relative_to(cwd) or dst_path == cwd:
+                  print(f"SKIP: invalid destination path {dst_raw}")
+                  continue
+
+              deny_list = [".git", ".jules"]
+              is_denied = False
+              for deny in deny_list:
+                  deny_path = (cwd / deny).resolve()
+                  if dst_path == deny_path or deny_path in dst_path.parents:
+                      is_denied = True
+                      break
+              if is_denied:
+                  print(f"SKIP: destination path in deny list {dst_raw}")
+                  continue
+
+              print(f"COPY: {src_raw} -> {dst_raw}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
               dst_path.parent.mkdir(parents=True, exist_ok=True)
