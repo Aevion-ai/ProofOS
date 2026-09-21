@@ -69,11 +69,27 @@ jobs:
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+              cwd = Path.cwd().resolve()
+              src_path = (cwd / ".monorepo" / src.lstrip("/")).resolve()
+              dst_path = (cwd / dst.lstrip("/")).resolve()
+
+              if not src_path.is_relative_to(cwd / ".monorepo"):
+                  print(f"SKIP: src path traversal detected: {src}")
+                  continue
+              if not dst_path.is_relative_to(cwd):
+                  print(f"SKIP: dst path traversal detected: {dst}")
+                  continue
+              if dst_path == cwd:
+                  print(f"SKIP: dst resolves exactly to root directory: {dst}")
+                  continue
+              if any(part in [".git", ".jules", ".monorepo"] for part in dst_path.relative_to(cwd).parts):
+                  print(f"SKIP: dst attempts to overwrite sensitive directory: {dst}")
+                  continue
+
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()

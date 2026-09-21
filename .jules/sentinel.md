@@ -1,0 +1,4 @@
+## 2026-09-21 - Path Traversal in Mirror Workflow
+**Vulnerability:** The GitHub Actions mirror workflow (`mirror-from-monorepo.yml`) constructs file paths directly from `MIRROR_MANIFEST.md` entries without sanitizing leading slashes or verifying they resolve within the repository boundaries, enabling arbitrary file overwrite (path traversal) on the runner.
+**Learning:** `pathlib.Path` concatenations like `Path("base") / "/absolute/path"` completely ignore the base directory and resolve to the absolute path, bypassing intended directory restrictions when processing external manifest payloads.
+**Prevention:** Always strip leading slashes using `.lstrip('/')` before concatenation, resolve the constructed path to its absolute form, and validate it using `is_relative_to()` against the intended base directory. Explicitly reject paths that resolve exactly to the root or target sensitive control-plane directories (e.g., `.git`).
