@@ -73,8 +73,19 @@ jobs:
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
-              print(f"COPY: {src} -> {dst}")
+              dst = dst.lstrip('/')
+              dst_path = Path(dst).resolve()
+              root_dir = Path.cwd().resolve()
+              if not dst_path.is_relative_to(root_dir):
+                  print(f"SKIP: path traversal detected: {dst}")
+                  continue
+              if dst_path == root_dir:
+                  print(f"SKIP: path resolves to root: {dst}")
+                  continue
+              if any(part in {'.git', '.jules'} for part in dst_path.parts):
+                  print(f"SKIP: path writes to forbidden directory: {dst}")
+                  continue
+              print(f"COPY: {src} -> {dst_path}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
               dst_path.parent.mkdir(parents=True, exist_ok=True)
