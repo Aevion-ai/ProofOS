@@ -64,16 +64,33 @@ jobs:
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
 
+          base_dir = Path(".").resolve()
+
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
+
+              dst = dst.lstrip("/")
+              dst_path = Path(dst).resolve()
+
+              if not dst_path.is_relative_to(base_dir):
+                  print(f"SKIP: destination not relative to base directory: {dst}")
+                  continue
+              if dst_path == base_dir:
+                  print(f"SKIP: destination is the base directory itself: {dst}")
+                  continue
+
+              rel_parts = dst_path.relative_to(base_dir).parts
+              if any(part in [".git", ".jules"] for part in rel_parts):
+                  print(f"SKIP: forbidden destination directory: {dst}")
+                  continue
+
               src_path = Path(".monorepo") / src
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
