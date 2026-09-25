@@ -1,0 +1,4 @@
+## 2024-09-25 - Prevent Path Traversal in Mirror Workflow
+**Vulnerability:** Path traversal in the `mirror-from-monorepo.yml` workflow where `dst` from `MIRROR_MANIFEST.md` is concatenated with the workspace root, allowing potential overwriting of sensitive files outside the intended destination.
+**Learning:** The workflow blindly trusted the path definitions in `MIRROR_MANIFEST.md` and didn't validate if `dst` paths were within the repository root or protected directories, creating an arbitrary file write risk if the manifest were compromised.
+**Prevention:** Explicitly strip leading slashes from the destination path, resolve it against the base directory (`Path.cwd()`), ensure it's relative to the base directory (`is_relative_to`), reject exact matches with the root, and deny modifications to sensitive directories like `.git` and `.jules`.
