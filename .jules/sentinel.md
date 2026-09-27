@@ -1,0 +1,4 @@
+## 2025-01-14 - Path Traversal in Mirror Workflow
+**Vulnerability:** The `.github/workflows/mirror-from-monorepo.yml` python script parsed the manifest and blindly resolved paths without checking if they escape the base directory (e.g., `../../../`) or modifying critical repository internals (e.g., `.git/`).
+**Learning:** Automated syncing scripts that parse text files to determine paths are prime targets for path traversal and file overwrite vulnerabilities, especially since `shutil.copy` operations can overwrite important system or control plane files.
+**Prevention:** Always strip leading slashes from parsed paths, resolve the constructed paths, and use `pathlib.Path.is_relative_to()` against the base directory. Also add explicit denylists for sensitive control-plane directories like `.git` and `.jules`.
