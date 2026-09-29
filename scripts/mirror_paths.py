@@ -120,4 +120,3 @@ def resolve_dst(raw: str, base_dst_dir: Path, base_src_dir: Optional[Path] = Non
         return None, f"FAIL: CONTROL_PLANE_TARGET_NOT_PERMITTED: {raw}"
 
     return resolved, None
-
