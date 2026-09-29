@@ -57,6 +57,35 @@ def _resolve_within(raw: str, base_dir: Path) -> Decision:
     return resolved, None
 
 
+def _is_control_plane_target(resolved: Path, base_dir: Path) -> bool:
+    """Report whether any path component relative to base_dir touches protected control-plane dirs."""
+    return any(p in PROTECTED_CONTROL_PLANE for p in resolved.relative_to(base_dir).parts)
+
+
+def _check_symlink_components(raw: str, base_dst_dir: Path) -> Optional[str]:
+    """Reject if destination or any ancestor in the relative path is a symlink."""
+    candidate = raw.strip()
+    if not candidate or is_absolute_request(candidate):
+        return None
+
+    current = base_dst_dir
+    for part in Path(candidate).parts:
+        if part == "..":
+            current = current.parent
+        elif part != ".":
+            current = current / part
+            if current.is_symlink():
+                return f"FAIL: SYMLINK_DESTINATION_NOT_PERMITTED: {raw}"
+    return None
+
+
+def _targets_source_checkout(resolved: Path, base_src_dir: Optional[Path]) -> bool:
+    """Report whether resolved path targets the source checkout."""
+    if base_src_dir is None:
+        return False
+    return resolved.is_relative_to(Path(base_src_dir).resolve())
+
+
 def resolve_src(raw: str, base_src_dir: Path) -> Decision:
     """Admit a manifest source path inside the private monorepo checkout."""
     base_src_dir = Path(base_src_dir).resolve()
@@ -64,8 +93,7 @@ def resolve_src(raw: str, base_src_dir: Path) -> Decision:
     if resolved is None:
         return None, reason
 
-    rel_parts = resolved.relative_to(base_src_dir).parts
-    if any(p in PROTECTED_CONTROL_PLANE for p in rel_parts):
+    if _is_control_plane_target(resolved, base_src_dir):
         return None, f"FAIL: CONTROL_PLANE_TARGET_NOT_PERMITTED: {raw}"
 
     return resolved, None
@@ -75,20 +103,9 @@ def resolve_dst(raw: str, base_dst_dir: Path, base_src_dir: Optional[Path] = Non
     """Admit a manifest destination path inside the public mirror checkout."""
     base_dst_dir = Path(base_dst_dir).resolve()
 
-    # Reject if destination or any ancestor in the relative path is a symlink.
-    # We inspect this *before* _resolve_within so that an escaping symlink
-    # correctly returns SYMLINK_DESTINATION_NOT_PERMITTED rather than a generic
-    # PATH_TRAVERSAL_NOT_PERMITTED.
-    candidate = raw.strip()
-    if candidate and not is_absolute_request(candidate):
-        current = base_dst_dir
-        for part in Path(candidate).parts:
-            if part == '..':
-                current = current.parent
-            elif part != '.':
-                current = current / part
-                if current.is_symlink():
-                    return None, f"FAIL: SYMLINK_DESTINATION_NOT_PERMITTED: {raw}"
+    symlink_err = _check_symlink_components(raw, base_dst_dir)
+    if symlink_err is not None:
+        return None, symlink_err
 
     resolved, reason = _resolve_within(raw, base_dst_dir)
     if resolved is None:
@@ -96,13 +113,11 @@ def resolve_dst(raw: str, base_dst_dir: Path, base_src_dir: Optional[Path] = Non
 
     # The monorepo checkout lives inside the mirror checkout, so containment
     # alone does not exclude it.
-    if base_src_dir is not None:
-        base_src_dir = Path(base_src_dir).resolve()
-        if resolved.is_relative_to(base_src_dir):
-            return None, f"FAIL: DESTINATION_TARGETS_SOURCE_CHECKOUT: {raw}"
+    if _targets_source_checkout(resolved, base_src_dir):
+        return None, f"FAIL: DESTINATION_TARGETS_SOURCE_CHECKOUT: {raw}"
 
-    rel_parts = resolved.relative_to(base_dst_dir).parts
-    if any(p in PROTECTED_CONTROL_PLANE for p in rel_parts):
+    if _is_control_plane_target(resolved, base_dst_dir):
         return None, f"FAIL: CONTROL_PLANE_TARGET_NOT_PERMITTED: {raw}"
 
     return resolved, None
+
