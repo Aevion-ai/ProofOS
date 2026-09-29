@@ -1,0 +1,4 @@
+## 2023-10-25 - Prevent Path Traversal in Mirror Workflow
+**Vulnerability:** The `.github/workflows/mirror-from-monorepo.yml` workflow blindly concatenated paths from `MIRROR_MANIFEST.md` using `Path(base) / path`, allowing absolute paths or `../` sequences to read/write arbitrary files (e.g., overwriting `.git` hooks or root files).
+**Learning:** Python's `pathlib.Path` resolves absolute paths by overriding the base directory if the right-side string starts with a slash, exacerbating path traversal risks beyond simple `../` sequences. Additionally, `is_relative_to()` evaluates True for the root itself, requiring explicit checks against self-deletion.
+**Prevention:** Always strip leading slashes before concatenation (`.lstrip('/')`), use `.resolve()` to normalize, check containment with `.is_relative_to(base)`, explicitly deny exact root matches, and block restricted directories like `.git` via explicit denylists.
