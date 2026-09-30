@@ -64,16 +64,30 @@ jobs:
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
 
+          import sys
+          cwd_root = Path.cwd().resolve()
+          monorepo_root = (cwd_root / ".monorepo").resolve()
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+              src_path = cwd_root / ".monorepo" / src.lstrip("/")
+              src_resolved = src_path.resolve()
+              if not src_resolved.is_relative_to(monorepo_root) or src_resolved == monorepo_root:
+                  print(f"FATAL: Source path {src} escapes .monorepo boundary")
+                  sys.exit(1)
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+              dst_path = Path(dst.lstrip("/"))
+              dst_resolved = (cwd_root / dst_path).resolve()
+              if not dst_resolved.is_relative_to(cwd_root) or dst_resolved == cwd_root:
+                  print(f"FATAL: Destination path {dst} escapes workspace boundary")
+                  sys.exit(1)
+              if any(p in {".git", ".jules"} for p in dst_resolved.relative_to(cwd_root).parts):
+                  print(f"FATAL: Destination path {dst} writes to forbidden directory")
+                  sys.exit(1)
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
