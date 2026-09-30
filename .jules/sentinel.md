@@ -1,0 +1,6 @@
+## 2024-05-18 - Path traversal in mirror workflow sync step
+**Vulnerability:** In `.github/workflows/mirror-from-monorepo.yml`, `src` and `dst` path mappings from `MIRROR_MANIFEST.md` are concatenated without any verification that they are safe or stay within their designated root directories (`.monorepo` and the repo root). If the manifest is manipulated to contain paths like `src: ../../etc/passwd -> hack.txt` or `src: my_file -> ../../.ssh/authorized_keys`, this script would blindly read outside the monorepo directory or overwrite files outside the repo workspace. Also, `.git` and `.jules` control directories are exposed to override.
+
+**Learning:** Any file system operation consuming paths parsed from external configuration files (even markdown) must validate that the constructed absolute paths stay within expected boundaries. `pathlib.Path(base) / unsanitized_string` does not protect against traversal if `unsanitized_string` is absolute or contains `..`. We must use `resolve().is_relative_to(base)` and reject exact matches to the base.
+
+**Prevention:** Always strip leading slashes before concatenating paths (`path.lstrip('/')`). Resolve the final path and enforce `resolved_path.is_relative_to(base)`. Make sure to reject paths that match the base itself, and deny overrides to `.git` or `.jules`.
