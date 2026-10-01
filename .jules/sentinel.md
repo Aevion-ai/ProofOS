@@ -1,0 +1,4 @@
+## 2026-10-01 - Path traversal vulnerability in MIRROR_MANIFEST.md parser
+**Vulnerability:** The Python script embedded in the `.github/workflows/mirror-from-monorepo.yml` workflow parsed source and destination paths from `MIRROR_MANIFEST.md` and used them directly in `shutil.copytree` and `shutil.copy2` without resolving and verifying that the paths stayed within their intended boundaries.
+**Learning:** Even internal configuration files like manifests should be treated as untrusted inputs when parsing them for file operations, as malicious entries like `src: ../../../etc/passwd -> README.md` or `src: file.txt -> ../.git/config` could lead to arbitrary file read/write.
+**Prevention:** Always strip leading slashes, resolve paths against their base directory using `Path.resolve()`, and enforce boundaries using `Path.is_relative_to(base)`. Explicitly reject the root itself and deny sensitive directories like `.git` and `.jules`.
