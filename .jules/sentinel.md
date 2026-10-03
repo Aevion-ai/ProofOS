@@ -1,0 +1,4 @@
+## 2024-03-24 - [Fix Path Traversal in Mirror Manifest Sync]
+**Vulnerability:** The mirror-from-monorepo workflow naively constructs paths from untrusted input in `MIRROR_MANIFEST.md` using `Path(".monorepo") / src` and `Path(dst)`, without resolving and validating that they stay within safe boundaries, allowing arbitrary read/write on the CI runner environment.
+**Learning:** Even internal configuration files used in CI workflows must be treated as untrusted data sources when parsing their values for file operations.
+**Prevention:** Paths parsed from manifest files must be stripped of leading slashes, resolved, and explicitly checked with `is_relative_to(base_dir)`. They should also reject inputs that resolve exactly to the base root and protect sensitive control-plane directories like `.git` or `.jules`.
