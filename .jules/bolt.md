@@ -1,0 +1,3 @@
+## 2024-10-05 - Caching Enum Ordering Mappings
+**Learning:** Dictionary creation inside Enum comparison methods (like `__ge__`) happens on every comparison, slowing down property checks. While monkey-patching methods works for performance, it breaks semantics and type checking. Extracting dictionary mapping to module-level constants below the class achieves the same performance without breaking types. Also, for Enum inheriting from `str`, use the enum instance (`self`) rather than `self.value` as the dictionary key to prevent runtime regressions.
+**Action:** Always extract static mapping dictionaries outside of frequently called methods or comparison operators, placing them after the class definition if they rely on the class itself.
