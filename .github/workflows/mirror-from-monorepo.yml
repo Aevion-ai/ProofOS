@@ -64,16 +64,39 @@ jobs:
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
 
+          base_dir = Path.cwd().resolve()
+          repo_base = (base_dir / ".monorepo").resolve()
+
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+
+              safe_src = src.lstrip("/")
+              src_path = (repo_base / safe_src).resolve()
+              if not src_path.is_relative_to(repo_base):
+                  print(f"SKIP: invalid source traversal: {src}")
+                  continue
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+
+              safe_dst = dst.lstrip("/")
+              dst_path = (base_dir / safe_dst).resolve()
+
+              if not dst_path.is_relative_to(base_dir):
+                  print(f"SKIP: invalid path traversal: {dst}")
+                  continue
+              if dst_path == base_dir:
+                  print(f"SKIP: cannot target repo root: {dst}")
+                  continue
+
+              forbidden = {".git", ".jules"}
+              if any(part in forbidden for part in dst_path.relative_to(base_dir).parts):
+                  print(f"SKIP: forbidden target directory: {dst}")
+                  continue
+
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
