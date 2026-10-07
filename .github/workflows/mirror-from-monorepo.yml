@@ -64,37 +64,16 @@ jobs:
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
 
-          base = Path(".").resolve()
-          base_monorepo = (base / ".monorepo").resolve()
-
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
-              src, dst = m.group(1).lstrip('/'), m.group(2).lstrip('/')
-
-              src_path = (Path(".monorepo") / src).resolve()
-              dst_path = Path(dst).resolve()
-
-              if not src_path.is_relative_to(base_monorepo) or src_path == base_monorepo:
-                  print(f"SKIP: invalid source path: {src}")
-                  continue
-
-              if not dst_path.is_relative_to(base) or dst_path == base:
-                  print(f"SKIP: invalid destination path: {dst}")
-                  continue
-
-              if dst_path.is_relative_to(base / ".git") or dst_path.is_relative_to(base / ".jules"):
-                  print(f"SKIP: destination path in sensitive directory: {dst}")
-                  continue
-
-              if dst_path.is_relative_to(base / ".github") and dst_path != base / ".github":
-                  pass # explicitly allow .github mirroring if required, although it may be dangerous.
-
+              src, dst = m.group(1), m.group(2)
+              src_path = Path(".monorepo") / src
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-
+              dst_path = Path(dst)
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
