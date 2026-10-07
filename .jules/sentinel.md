@@ -1,0 +1,4 @@
+## 2025-05-18 - Path Traversal in Mirror Workflow
+**Vulnerability:** The Python script embedded in `.github/workflows/mirror-from-monorepo.yml` directly used `Path(dst)` and `Path(".monorepo") / src` with values parsed from `MIRROR_MANIFEST.md` without any sanitization or validation. This allows arbitrary file writes/reads (e.g., `src: /etc/passwd -> /etc/passwd` or `src: ../../secret -> ../../secret`).
+**Learning:** Even internal configuration files (like manifests used in CI) must be treated as untrusted data sources. When path components start with `/`, `pathlib.Path` treats them as absolute paths and discards previous parts.
+**Prevention:** Always strip leading slashes before path concatenation (`.lstrip('/')`). Validate resulting paths using `resolve().is_relative_to(base)`. Explicitly reject paths that resolve exactly to the base to prevent self-deletion, and denylist sensitive control-plane directories like `.git` and `.jules`.
