@@ -1,0 +1,4 @@
+## 2024-10-09 - Path Traversal via Untrusted Manifest in CI Workflow
+**Vulnerability:** A Python script in `.github/workflows/mirror-from-monorepo.yml` parsed paths from an untrusted manifest (`MIRROR_MANIFEST.md`) and performed direct file copy operations, allowing arbitrary read/write out-of-bounds (path traversal) up to overwriting `.git` contents.
+**Learning:** Even internal configuration or manifest files parsed during CI workflows must be treated as untrusted data sources. Concatenating parsed file paths directly without resolving and validating them against a defined boundary creates high-impact path traversal/CI hijack vulnerabilities.
+**Prevention:** Always strip leading slashes before path construction. Resolve paths (`pathlib.Path.resolve()`) and rigorously validate (`is_relative_to()`) that they remain within intended source and destination boundaries. Deny explicitly sensitive directories like `.git`.
