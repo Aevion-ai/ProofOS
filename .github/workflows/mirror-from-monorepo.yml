@@ -69,11 +69,26 @@ jobs:
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+              monorepo_base = Path(".monorepo").resolve()
+              src_path = (monorepo_base / str(src).lstrip('/')).resolve()
+              if not src_path.is_relative_to(monorepo_base) or src_path == monorepo_base:
+                  print(f"SKIP: source bound violation: {src}")
+                  continue
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+              repo_base = Path(".").resolve()
+              dst_path = (repo_base / str(dst).lstrip('/')).resolve()
+              if not dst_path.is_relative_to(repo_base) or dst_path == repo_base:
+                  print(f"SKIP: destination bound violation: {dst}")
+                  continue
+              try:
+                  rel_dst = dst_path.relative_to(repo_base)
+                  if rel_dst.parts and rel_dst.parts[0] in ('.git', '.jules'):
+                      print(f"SKIP: destination control dir: {dst}")
+                      continue
+              except ValueError:
+                  pass
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()
