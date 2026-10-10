@@ -1,0 +1,3 @@
+## 2025-02-12 - Enum comparison caching optimization
+**Learning:** Python Enums instantiated with custom types (like `str`) alongside default implementations (like `int` or `IntEnum`) can raise `TypeError: too many data types` in Python 3.12 due to complex metaclass multiple-inheritance resolution.
+**Action:** When optimizing Enum comparison methods (`__ge__`, `__gt__`), prefer using a module-level dictionary to cache values rather than altering Enum base classes or attempting to use `IntEnum` combined with `str`. Ensure caching dictionaries are referenced using `self` (the enum instance) directly instead of `self.value` for correct type propagation.
