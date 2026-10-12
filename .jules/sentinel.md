@@ -1,0 +1,4 @@
+## 2024-05-30 - Path Traversal in Mirror Workflow
+**Vulnerability:** The python script inside `.github/workflows/mirror-from-monorepo.yml` reads manifest paths using string concatenation without resolving and verifying bounds against the repository root, allowing arbitrary read/write CI exploits.
+**Learning:** Even internal configuration files like repository manifests used in CI workflows must be treated as untrusted data sources when parsing their values for file operations.
+**Prevention:** Always parse paths by stripping leading slashes, resolving the constructed path, and validating it using `pathlib.Path.is_relative_to()` against the intended base directory. Reject paths that resolve exactly to the base root and implement denylists for sensitive control-plane directories like `.git` and `.jules`.
