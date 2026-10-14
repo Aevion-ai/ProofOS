@@ -1,0 +1,4 @@
+## 2024-05-24 - CI Artifact Path Traversal Fix
+**Vulnerability:** The mirror-from-monorepo.yml GitHub Action workflow parsed source and destination paths from MIRROR_MANIFEST.md and passed them directly to `pathlib.Path` without bounding or sanitization, leading to an arbitrary read/write CI exploit.
+**Learning:** Even internal configuration files used in CI workflows (like MIRROR_MANIFEST.md) must be treated as untrusted data sources when parsing their values for file operations, as they can be manipulated to achieve path traversal (e.g. bypassing `.monorepo` constraints by starting paths with `/` or `../`).
+**Prevention:** Always strip leading slashes before concatenating paths, resolve them, validate them using `pathlib.Path.is_relative_to()` against the intended base directory, reject inputs that resolve exactly to the base root, and implement denylists for sensitive directories (e.g. `.git`, `.jules`).
