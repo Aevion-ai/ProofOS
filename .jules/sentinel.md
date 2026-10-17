@@ -1,0 +1,4 @@
+## 2024-10-17 - [Path Traversal in CI Manifest Parsing]
+**Vulnerability:** The mirror-from-monorepo.yml CI workflow parses `MIRROR_MANIFEST.md` and copies files using `shutil` without bounding or validating the parsed source and destination paths.
+**Learning:** Even internal configuration files used in CI workflows must be treated as untrusted data sources. Absolute paths (e.g., `src: /etc/passwd`) or directory traversals (`src: ../../..`) can lead to arbitrary file reads/writes on the CI runner, which can be exploited to overwrite `.git/config` or other control planes.
+**Prevention:** Always strip leading slashes from parsed paths, resolve the constructed path, and validate it using `pathlib.Path.is_relative_to()` against an explicit base directory. Also, explicitly reject inputs that resolve exactly to the base root to prevent self-deletion, and use denylists for sensitive directories.
