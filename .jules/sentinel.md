@@ -1,0 +1,5 @@
+
+## 2024-05-24 - Path Traversal in CI Workflow Manifest Parsing
+**Vulnerability:** The GitHub Actions workflow `.github/workflows/mirror-from-monorepo.yml` parsed paths from `MIRROR_MANIFEST.md` and passed them directly to `shutil.copy2` and `shutil.copytree` without validation. This allowed path traversal (e.g. `../` or `/absolute/paths`) in the untrusted manifest to overwrite sensitive or arbitrary files inside or outside the repository scope, potentially leading to arbitrary read/write CI exploits.
+**Learning:** Even internal configuration files used in CI workflows must be treated as untrusted data sources when determining operations (like `shutil.copy`). Assuming "allow-list only" based purely on a regex match is insufficient if the target values can break out of intended bounds.
+**Prevention:** Always parse, sanitize (strip leading slashes), resolve, and explicitly validate that constructed paths fall within the expected, bounded directory trees (`is_relative_to()`). Ensure inputs that resolve exactly to the base root are rejected, and protect sensitive directories (like `.git` and `.jules`) with denylists.
