@@ -23,30 +23,63 @@ PUBLIC_SURFACES = [
     "docs/index.html", "docs/assets",
 ]
 
-# RED-gated framing / INTERNAL_ONLY codenames / unverified-badge tokens.
 DENYLIST = [
     r"Wukong Bell", r"QGOV Predict",
     r"NIST published (?:the|a) proof",
-    r"96\.02",                       # specific density figure, unsourced
-    r"lean%20build-EXIT%200",        # badge: unverified "lean build EXIT 0"
-    r"proof%20density-9",            # badge: density % (we publish none)
-    r"open%20obligations-(?:[1-9]\d\d|[3-9]\d)",  # badge: >=30 open obligations
-    r"paper-arXiv%20ready",          # badge: paper is not arXiv-submitted
+    r"96\.02",
+    r"lean%20build-EXIT%200",
+    r"proof%20density-9",
+    r"open%20obligations-(?:[1-9]\d\d|[3-9]\d)",
+    r"paper-arXiv%20ready",
 ]
 
 
-def lean_inventory() -> dict:
-    """Recompute theorem/sorry counts from the Lean sources in lean/."""
-    lean_dir = ROOT / "lean"
-    files = sorted(lean_dir.glob("*.lean"))
+def classify_lean_file(path: str, default_roots: list[str]) -> str:
+    """Separate research scaffolding from default-target and other Lean code."""
+    path = pathlib.PurePosixPath(path).as_posix()
+    if path == "Aevion/SBIR.lean" or path.startswith("Aevion/SBIR/"):
+        return "research_scaffolding"
+    if any(path == f"{root}.lean" or path.startswith(f"{root}/")
+           for root in default_roots):
+        return "default_target"
+    return "non_default_source"
+
+
+def lean_inventory(root: pathlib.Path | None = None) -> dict:
+    """Recursively recompute theorem/sorry counts and classify every source."""
+    repo_root = ROOT if root is None else root
+    lean_dir = repo_root / "lean"
+    lakefile = (repo_root / "lakefile.toml").read_text(encoding="utf-8")
+    roots_match = re.search(r"(?m)^roots\s*=\s*\[([^]]*)\]", lakefile)
+    default_roots = re.findall(r'"([^"]+)"', roots_match.group(1)) if roots_match else []
+    files = sorted(lean_dir.rglob("*.lean"))
     theorems = sorries = 0
+    entries = []
     for f in files:
         t = f.read_text(encoding="utf-8")
         t = re.sub(r"/-.*?-/", "", t, flags=re.S)
         t = re.sub(r"--.*", "", t)
-        theorems += len(re.findall(r"^\s*theorem\s+\w+", t, flags=re.M))
-        sorries += len(re.findall(r"\bsorry\b", t))
-    return {"files": len(files), "theorems": theorems, "sorries": sorries}
+        file_theorems = len(re.findall(r"^\s*theorem\s+\w+", t, flags=re.M))
+        file_sorries = len(re.findall(r"\bsorry\b", t))
+        theorems += file_theorems
+        sorries += file_sorries
+        rel = f.relative_to(lean_dir).as_posix()
+        entries.append({
+            "path": rel,
+            "classification": classify_lean_file(rel, default_roots),
+            "theorems": file_theorems,
+            "sorries": file_sorries,
+        })
+    return {
+        "files": len(files),
+        "theorems": theorems,
+        "sorries": sorries,
+        "default_roots": default_roots,
+        "entries": entries,
+        "research_scaffolding_files": sum(
+            e["classification"] == "research_scaffolding" for e in entries
+        ),
+    }
 
 
 def num(s: str) -> int:
@@ -88,9 +121,9 @@ def main() -> int:
     """Scan public surfaces; exit 1 on any claim exceeding the inventory."""
     inv = lean_inventory()
     print(f"[metric_gate] lean inventory: {inv['files']} files, "
-          f"{inv['theorems']} theorem decls, {inv['sorries']} sorry")
+          f"{inv['theorems']} theorem decls, {inv['sorries']} sorry; "
+          f"research scaffolding: {inv['research_scaffolding_files']} files")
     deny = re.compile("|".join(DENYLIST))
-    # structural claim patterns: (regex, kind, ceiling)
     claims = [
         (re.compile(r"([\d,]+)\s*(?:Lean\s*4?\s*)?theorems?", re.I), "theorems", inv["theorems"]),
         (re.compile(r"(?:across|in)\s*([\d,]+)\s*(?:Lean\s*)?files", re.I), "files", inv["files"]),
