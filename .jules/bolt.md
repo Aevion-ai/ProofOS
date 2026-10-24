@@ -1,0 +1,3 @@
+## 2024-10-24 - Optimizing Enum Comparisons with Module-level Constants
+**Learning:** In Python Enums that implement custom comparison operators (like `__ge__` and `__gt__`), defining the ordering dictionary inside the method causes it to be recreated on every comparison, creating a significant performance bottleneck in hot paths.
+**Action:** When dictionary mapping caching is needed for Enum comparisons, define the methods normally within the class and reference module-level constants defined below the class. Use the enum instance (`self`) as the dictionary key rather than `self.value` to prevent runtime regressions.
