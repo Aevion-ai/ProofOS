@@ -1,0 +1,57 @@
+name: Generate Lake manifest once
+
+on:
+  push:
+    branches: [ci/lake-manifest-001]
+    paths:
+      - .github/workflows/ci-generate-lake-manifest-once.yml
+
+permissions:
+  contents: read
+
+jobs:
+  generate-lockfile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout pinned ProofOS main
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          submodules: false
+
+      - name: Install pinned Lean toolchain (no build)
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 --fail --silent --show-error \
+            https://elan.lean-lang.org/elan-init.sh -o /tmp/elan-init.sh
+          sh /tmp/elan-init.sh -y --default-toolchain leanprover/lean4:v4.16.0
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Resolve Mathlib dependency and capture manifest only
+        shell: bash
+        run: |
+          set -euo pipefail
+          lake --version
+          lake update
+          test -s lake-manifest.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path("lake-manifest.json").read_text(encoding="utf-8"))
+          pkgs = [p for p in data.get("packages", []) if p.get("name") == "mathlib"]
+          assert len(pkgs) == 1, "Expected exactly one Mathlib package"
+          assert pkgs[0].get("inputRev") == "v4.16.0", "Mathlib input revision does not match lakefile.toml"
+          print("MANIFEST_VALIDATED: mathlib v4.16.0")
+          print("MANIFEST_BEGIN")
+          print(Path("lake-manifest.json").read_text(encoding="utf-8"))
+          print("MANIFEST_END")
+          PY
+
+      - name: Upload generated manifest for review
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: proofos-lake-manifest-v4.16.0
+          path: lake-manifest.json
+          if-no-files-found: error
+          retention-days: 7
