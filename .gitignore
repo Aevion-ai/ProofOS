@@ -6,3 +6,9 @@ node_modules/
 lake-packages/
 e2e/screenshots/
 test-results/
+
+# Lean build artifacts
+.lake/
+
+# Mirrored monorepo checkout (workflow-managed)
+.monorepo/
