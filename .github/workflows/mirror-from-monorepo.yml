@@ -64,16 +64,42 @@ jobs:
           manifest = Path("MIRROR_MANIFEST.md")
           text = manifest.read_text(encoding="utf-8")
 
+          cwd = Path.cwd().resolve()
+          monorepo_base = (cwd / ".monorepo").resolve()
+
           for line in text.splitlines():
               m = re.match(r"^\s*src:\s*(.+?)\s*->\s*(.+?)\s*$", line)
               if not m:
                   continue
               src, dst = m.group(1), m.group(2)
-              src_path = Path(".monorepo") / src
+
+              # Strip leading slashes to prevent absolute path override
+              clean_src = src.lstrip('/')
+              clean_dst = dst.lstrip('/')
+
+              src_path = (monorepo_base / clean_src).resolve()
+              dst_path = (cwd / clean_dst).resolve()
+
+              # Validate source is within monorepo
+              if not src_path.is_relative_to(monorepo_base):
+                  print(f"SKIP: source path traversal detected: {src}")
+                  continue
+
+              # Validate destination is within workspace and not the root itself
+              if not dst_path.is_relative_to(cwd) or dst_path == cwd:
+                  print(f"SKIP: dest path traversal or root override detected: {dst}")
+                  continue
+
+              # Denylist sensitive directories
+              deny_list = [".git", ".jules", ".monorepo"]
+              if any(dst_path == (cwd / d).resolve() or dst_path.is_relative_to((cwd / d).resolve()) for d in deny_list):
+                  print(f"SKIP: dest path in denylist: {dst}")
+                  continue
+
               if not src_path.exists():
                   print(f"SKIP: source not found: {src}")
                   continue
-              dst_path = Path(dst)
+
               print(f"COPY: {src} -> {dst}")
               if dst_path.exists():
                   shutil.rmtree(dst_path) if dst_path.is_dir() else dst_path.unlink()

@@ -1,0 +1,4 @@
+## 2024-10-24 - Path Traversal Vulnerability in CI Workflow
+**Vulnerability:** The mirror-from-monorepo.yml GitHub Actions workflow parsed the `MIRROR_MANIFEST.md` file and directly used the paths to copy files without validation. This allowed arbitrary path traversal, reading from outside the `.monorepo` directory and overwriting arbitrary files in the runner workspace, including `.git` and `.github/workflows`.
+**Learning:** Even internal configuration files like repository manifests used in CI workflows must be treated as untrusted data sources when parsing their values for file operations.
+**Prevention:** Always sanitize paths by stripping leading slashes, resolving paths, and explicitly checking `is_relative_to()` to ensure bounds. Also, prevent writing to the workspace root or denylisted sensitive directories (like `.git`).
