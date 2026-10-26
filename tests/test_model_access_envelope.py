@@ -37,6 +37,53 @@ class TestAccessTierOrdering:
         assert not (AccessTier.PUBLIC >= AccessTier.HUMAN_ONLY)
 
 
+class TestAccessTierStrictOrdering:
+    """AccessTier.__gt__: strict partial order over restrictiveness (AEV-31).
+
+    __gt__ underpins fallback_envelope() tier selection; these tests pin the
+    strict ordering so a regression in the enum comparison cannot silently
+    widen or narrow a fallback tier.
+    """
+
+    def test_strictly_more_restrictive(self) -> None:
+        assert AccessTier.BUSINESS > AccessTier.PUBLIC
+        assert AccessTier.TRUSTED_ACCESS > AccessTier.BUSINESS
+        assert AccessTier.HUMAN_ONLY > AccessTier.TRUSTED_ACCESS
+
+    def test_equal_tier_is_not_strictly_greater(self) -> None:
+        assert not (AccessTier.PUBLIC > AccessTier.PUBLIC)
+        assert not (AccessTier.BUSINESS > AccessTier.BUSINESS)
+        assert not (AccessTier.TRUSTED_ACCESS > AccessTier.TRUSTED_ACCESS)
+        assert not (AccessTier.HUMAN_ONLY > AccessTier.HUMAN_ONLY)
+
+    def test_less_restrictive_is_not_greater(self) -> None:
+        assert not (AccessTier.PUBLIC > AccessTier.BUSINESS)
+        assert not (AccessTier.PUBLIC > AccessTier.TRUSTED_ACCESS)
+        assert not (AccessTier.PUBLIC > AccessTier.HUMAN_ONLY)
+        assert not (AccessTier.BUSINESS > AccessTier.TRUSTED_ACCESS)
+        assert not (AccessTier.BUSINESS > AccessTier.HUMAN_ONLY)
+        assert not (AccessTier.TRUSTED_ACCESS > AccessTier.HUMAN_ONLY)
+
+    def test_strict_transitivity(self) -> None:
+        assert AccessTier.HUMAN_ONLY > AccessTier.PUBLIC
+        assert AccessTier.TRUSTED_ACCESS > AccessTier.PUBLIC
+
+    def test_gt_implies_ge(self) -> None:
+        for a in AccessTier:
+            for b in AccessTier:
+                if a > b:
+                    assert a >= b
+
+    def test_total_order_completeness(self) -> None:
+        """Every distinct pair is exactly one of >, <, or == comparable."""
+        tiers = list(AccessTier)
+        for i, a in enumerate(tiers):
+            for j, b in enumerate(tiers):
+                if i == j:
+                    continue
+                assert (a > b) != (b > a)
+
+
 class TestModelAccessEnvelope:
     """ModelAccessEnvelope construction and validation."""
 
