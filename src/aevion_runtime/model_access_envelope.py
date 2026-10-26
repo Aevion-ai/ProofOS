@@ -81,9 +81,39 @@ class ModelAccessEnvelope:
 
     def __post_init__(self) -> None:
         """Validate envelope invariants after construction."""
+        self._validate_field_types()
         self._validate_public_tier()
         self._validate_human_only_tier()
         self._validate_dual_use_critical()
+
+    def _validate_field_types(self) -> None:
+        """Fail-closed: dataclass annotations are not runtime-enforced.
+
+        Confirmed fail-open (2026-10-25, adversarial self-audit): a plain string
+        such as "UNKNOWN" stored in access_tier passes every tier validator by
+        early-return (plain str != enum member), and is_safe_deployable() —
+        which never reads access_tier, safeguard_mode, or capability_class —
+        returns True. Reject non-enum instances at construction so the
+        deployment gate can never verdict on an envelope whose classified
+        fields were never typed.
+        """
+        if not isinstance(self.capability_class, CapabilityClass):
+            raise ValueError(
+                "capability_class must be a CapabilityClass enum member, "
+                f"got {type(self.capability_class).__name__}: "
+                f"{self.capability_class!r}"
+            )
+        if not isinstance(self.access_tier, AccessTier):
+            raise ValueError(
+                "access_tier must be an AccessTier enum member, "
+                f"got {type(self.access_tier).__name__}: {self.access_tier!r}"
+            )
+        if not isinstance(self.safeguard_mode, SafeguardMode):
+            raise ValueError(
+                "safeguard_mode must be a SafeguardMode enum member, "
+                f"got {type(self.safeguard_mode).__name__}: "
+                f"{self.safeguard_mode!r}"
+            )
 
     def _validate_public_tier(self) -> None:
         if self.access_tier != AccessTier.PUBLIC:
