@@ -40,7 +40,7 @@ class AccessTier(str, Enum):
         }
         return order[self] >= order[other]
 
-    def __gt__(self, other: AccessTier) -> bool:  # type: ignore[override]
+    def __gt__(self, other: AccessTier) -> type: ignore[override]
         """Strict partial order: more restrictive > less restrictive."""
         order = {
             AccessTier.PUBLIC: 0,
@@ -150,6 +150,16 @@ class ModelAccessEnvelope:
     def is_safe_deployable(self) -> bool:
         """
         A deployment is safe IFF the envelope, not the model, guarantees it.
+
+        Scope limit (AEV-33): this predicate is deliberately envelope-only.
+        It does NOT re-inspect access_tier, safeguard_mode, or
+        capability_class — classification guarantees are enforced at
+        construction time (__post_init__ -> _validate_field_types), so any
+        object that reaches this method has already been proven to carry
+        genuine enum-typed classified fields. A non-enum envelope is a
+        construction failure (fail-closed), never an object to verdict on.
+        This separation is what made the INTAKE-004 fail-open finding
+        fixable at a single chokepoint instead of in every consumer.
 
         Theorem (deployment_safety_not_model_intrinsic):
           SafeDeployable(M, E) ↔
