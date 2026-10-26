@@ -11,13 +11,12 @@ Every rejection is returned as an explicit reason string; a caller that gets a
 """
 
 from pathlib import Path, PureWindowsPath
-from typing import Optional, Tuple
 
 # Control-plane directories that may never be written in the mirror checkout
 # or read from the monorepo checkout.
 PROTECTED_CONTROL_PLANE = frozenset({".git", ".github", ".jules", ".monorepo"})
 
-Decision = Tuple[Optional[Path], Optional[str]]
+Decision = tuple[Path | None, str | None]
 
 
 def is_absolute_request(raw: str) -> bool:
@@ -62,7 +61,7 @@ def _is_control_plane_target(resolved: Path, base_dir: Path) -> bool:
     return any(p in PROTECTED_CONTROL_PLANE for p in resolved.relative_to(base_dir).parts)
 
 
-def _check_symlink_components(raw: str, base_dst_dir: Path) -> Optional[str]:
+def _check_symlink_components(raw: str, base_dst_dir: Path) -> str | None:
     """Reject if destination or any ancestor in the relative path is a symlink."""
     candidate = raw.strip()
     if not candidate or is_absolute_request(candidate):
@@ -79,7 +78,7 @@ def _check_symlink_components(raw: str, base_dst_dir: Path) -> Optional[str]:
     return None
 
 
-def _targets_source_checkout(resolved: Path, base_src_dir: Optional[Path]) -> bool:
+def _targets_source_checkout(resolved: Path, base_src_dir: Path | None) -> bool:
     """Report whether resolved path targets the source checkout."""
     if base_src_dir is None:
         return False
@@ -99,7 +98,7 @@ def resolve_src(raw: str, base_src_dir: Path) -> Decision:
     return resolved, None
 
 
-def resolve_dst(raw: str, base_dst_dir: Path, base_src_dir: Optional[Path] = None) -> Decision:
+def resolve_dst(raw: str, base_dst_dir: Path, base_src_dir: Path | None = None) -> Decision:
     """Admit a manifest destination path inside the public mirror checkout."""
     base_dst_dir = Path(base_dst_dir).resolve()
 

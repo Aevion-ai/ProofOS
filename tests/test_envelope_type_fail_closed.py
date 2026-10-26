@@ -22,16 +22,16 @@ from src.aevion_runtime.model_access_envelope import (
 
 
 def _base_kwargs(**overrides):
-    kwargs = dict(
-        model_id="test-model",
-        capability_class=CapabilityClass.GENERAL,
-        access_tier=AccessTier.BUSINESS,
-        safeguard_mode=SafeguardMode.FULL,
-        fallback_model="safe-fallback",
-        retention_policy_days=30,
-        receipt_required=True,
-        human_gate_required=True,
-    )
+    kwargs = {
+        "model_id": "test-model",
+        "capability_class": CapabilityClass.GENERAL,
+        "access_tier": AccessTier.BUSINESS,
+        "safeguard_mode": SafeguardMode.FULL,
+        "fallback_model": "safe-fallback",
+        "retention_policy_days": 30,
+        "receipt_required": True,
+        "human_gate_required": True,
+    }
     kwargs.update(overrides)
     return kwargs
 
