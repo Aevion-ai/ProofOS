@@ -40,7 +40,7 @@ class AccessTier(str, Enum):
         }
         return order[self] >= order[other]
 
-    def __gt__(self, other: AccessTier) -> type: ignore[override]
+    def __gt__(self, other: AccessTier) -> bool:  # type: ignore[override]
         """Strict partial order: more restrictive > less restrictive."""
         order = {
             AccessTier.PUBLIC: 0,
