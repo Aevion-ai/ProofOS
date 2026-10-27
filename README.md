@@ -5,7 +5,7 @@
 [![Lean 4](https://img.shields.io/badge/Lean-4.16.0-7B2D8B)](lean/)
 [![CI](https://github.com/Aevion-ai/ProofOS/actions/workflows/ci.yml/badge.svg)](https://github.com/Aevion-ai/ProofOS/actions)
 
-**Receipt chain for Lean 4 proof obligations.** Every agent decision generates a cryptographically chained, machine-checkable artifact.
+**Receipt chain for AI agent decisions.** Every agent decision generates a cryptographically chained, machine-checkable artifact; Lean 4 proofs are in progress.
 
 ---
 
@@ -24,7 +24,7 @@ ProofOS wraps AI agent decisions in a constitutional halt gate that blocks out-o
 The design follows a published impossibility result (Vassilev, *IEEE S&P*, 2026) that no finite guardrail set is universally robust, and implements the three architectural responses it motivates: continuous monitoring via receipt chains, proactive red-teaming via a multi-agent counsel colony, and operational resilience via constitutional halt gates and human-in-the-loop escalation.
 
 ```
-Agent Action → Halt Gate (Lean 4 predicate) → Colony Review (7 agents) → Receipt (SHA-256) → Ledger
+Agent Action → Fail-closed Halt Gate → Colony Review (7 agents) → Receipt (SHA-256) → Ledger
 ```
 
 ---
