@@ -19,7 +19,7 @@ mirrored. See the manifest for the current sync status and path map.
 
 ## What it does
 
-ProofOS wraps AI agent decisions in a constitutional halt gate that blocks out-of-policy actions (fail-closed). When an agent proposes an action, the system checks it against declared safety predicates. If the check passes, a SHA-256 receipt is emitted. If it fails, the action is blocked. Every receipt is SHA-256 content-addressed and can be checked by replaying the chain against the tip and count anchored at run time; this does not detect a full rewrite of the ledger and seal. Lean 4 proofs for the gate predicates are in progress.
+ProofOS scores a submitted evidence envelope in a constitutional halt gate (runtime policy gate) and returns ALLOW or DENY with a SHA-256 receipt that carries the reason. Forged or invalid evidence is rejected with exit code 1 and nothing is written to the ledger. The runtime does not intercept, hold, or pause tool calls; intercepting or holding tool calls is planned. Every receipt is SHA-256 content-addressed and can be checked by replaying the chain against the tip and count anchored at run time; this does not detect a full rewrite of the ledger and seal. Lean 4 proofs for the gate predicates are in progress.
 
 The design follows a published impossibility result (Vassilev, *IEEE S&P*, 2026) that no finite guardrail set is universally robust, and implements the three architectural responses it motivates: continuous monitoring via receipt chains, proactive red-teaming via a multi-agent counsel colony, and operational resilience via fail-closed constitutional halt gates (ALLOW/DENY in the runtime policy gate). Human hold, release, approval, and escalation—including rate targets such as 12% described in [architecture.md](architecture.md)—are planned and not implemented in this repository.
 
@@ -79,7 +79,7 @@ ProofOS/
 |-----------|-------------|------|
 | Constitutional Halt Gate | Fail-closed gate on declared predicates (Lean proofs in progress) | [LeishmanBerger.lean](lean/LeishmanBerger.lean) |
 | Receipt Chain | SHA-256 content-addressed, canonical JSON; replay against tip and count anchored at run time (does not detect a full rewrite of the ledger and seal) | [architecture.md](architecture.md) |
-| Agent Counsel Colony | N-agent review council with Byzantine fault detection and SIFT filtering | [quorum.md](quorum.md) |
+| Agent Counsel Colony | Seven-role counsel process specified in quorum.md (Byzantine and SIFT roles); not deployed in this repo | [quorum.md](quorum.md) |
 | Capability Access Separation | Access envelopes PUBLIC → HUMAN\_ONLY; Lean proofs in progress | [CapabilityAccessSeparation.lean](lean/CapabilityAccessSeparation.lean) |
 | ModelAccessEnvelope | Runtime access control for frontier models (20/20 tests) | [model_access_envelope.py](src/aevion_runtime/model_access_envelope.py) |
 | Playwright E2E | Browser smoke tests for the aevion.ai dashboard | [smoke.spec.ts](e2e/smoke.spec.ts) |
@@ -92,16 +92,16 @@ The architecture instantiates three prescriptions from Vassilev's 2026 impossibi
 | Principle | Implementation |
 |-----------|---------------|
 | Continuous monitoring | Receipt chain — every decision emits an auditable record |
-| Proactive red-teaming | Agent Counsel Colony — Byzantine + SIFT agents as standing capability |
+| Proactive red-teaming | Agent Counsel Colony — Byzantine and SIFT roles as specified in quorum.md |
 | Operational resilience | Halt gate (ALLOW/DENY only in runtime). Human Gate hold, release, approval, and escalation (e.g. 12% rate in architecture.md) planned, not implemented |
 
 The full architecture diagram and walkthrough are in [architecture.md](architecture.md).
 
 ## Agent Counsel Colony
 
-Seven agents review every change before it's committed. A Quorum Constitution ([quorum.md](quorum.md)) defines how their votes aggregate. Each agent has a distinct role — from deterministic rule-checking to Byzantine adversarial probing to pure-function intent folding. The DiF agent is a deterministic function that cannot hallucinate. The SIFT agent strips decorative reasoning from other agents' outputs before the Arbiter synthesizes a final verdict.
+[quorum.md](quorum.md) specifies a designed Agent Counsel Colony review process (seven roles) and how votes aggregate; it does not run automatically on every commit in this repository. Each role is distinct — from deterministic rule-checking to Byzantine adversarial probing to pure-function intent folding. The DiF agent is a deterministic function. The SIFT agent strips decorative reasoning from other agents' outputs before the Arbiter synthesizes a final verdict in that specified process.
 
-The architecture is specified in the Quorum Constitution. Implementation and evaluation harnesses are available in the private repository.
+The colony is specified in the Quorum Constitution, not deployed as production automation in this public mirror. Implementation and evaluation harnesses are available in the private repository.
 
 ## Lean proofs (in progress)
 
