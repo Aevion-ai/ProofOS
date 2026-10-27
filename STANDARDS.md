@@ -8,7 +8,7 @@ ProofOS design themes are informed by NIST AI RMF 1.0 (AI 100-1) and the Secure 
 
 ### Govern
 
-- Constitutional halt gate enforces declared safety predicates before action execution (**ALLOW/DENY shipped** in this repo)
+- Constitutional halt gate scores submitted evidence against declared safety predicates and returns ALLOW or DENY (**shipped**); intercepting actions before execution is **planned**
 - Human gate escalation when automated guardrails disagree (**planned**; hold, release, and approval not implemented here)
 - Open-obligation surface: Lean modules in progress; obligations are tracked in source rather than hidden behind confidence scores
 
@@ -26,7 +26,7 @@ ProofOS design themes are informed by NIST AI RMF 1.0 (AI 100-1) and the Secure 
 ### Manage
 
 - Quorum Constitution defines aggregation rules for the **specified** counsel colony process
-- Capability Access Separation enforces tiered deployment (PUBLIC → BUSINESS → TRUSTED_ACCESS → HUMAN_ONLY) in Lean sources (**proofs in progress**)
+- Capability Access Separation defines access tiers (PUBLIC → BUSINESS → TRUSTED_ACCESS → HUMAN_ONLY) in Lean sources (**proofs in progress**)
 - Policy-versioned execution with content-addressed receipts (**shipped** for runtime gate decisions)
 
 ## NIST SP 800-218A (mapping table — implementation status)

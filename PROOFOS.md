@@ -1,7 +1,7 @@
 # ProofOS
 
 [![Lean 4](https://img.shields.io/badge/Lean-4.16.0-7B2D8B)](lean/)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 **Receipt chain for AI agent decisions.** Fail-closed ALLOW/DENY gating with SHA-256-chained receipts; Lean 4 proofs are in progress.
 
@@ -13,7 +13,7 @@ Canonical public documentation: [README.md](README.md).
 
 ProofOS scores a submitted evidence envelope in a runtime constitutional halt gate and returns **ALLOW** or **DENY** with a SHA-256 receipt that carries the reason. Forged or invalid evidence is rejected with exit code 1 and nothing is written to the ledger. The runtime does not intercept, hold, or pause tool calls (planned). Receipts can be checked by replaying the chain against the tip and count anchored at run time.
 
-The Agent Counsel Colony is **specified** in [quorum.md](quorum.md), **not deployed** in this repository. Human hold, release, approval, and escalation—including design targets such as 12% escalation in architecture notes—are **planned**, not implemented.
+The Agent Counsel Colony is **specified** in [quorum.md](quorum.md), **not deployed** in this repository. Human hold, release, approval, and escalation—including escalation-rate targets (planned) in architecture notes—are **planned**, not implemented.
 
 ```
 Agent Action → Fail-closed Halt Gate (ALLOW/DENY) → Receipt (SHA-256) → Ledger
@@ -41,7 +41,7 @@ ProofOS applies a well-established pattern — **verify the boundary, not the un
 
 | System | What it verified | The analogy in ProofOS |
 |--------|------------------|------------------------|
-| seL4 | Microkernel implementation correctness | Halt gate verifies the agent-action interface |
+| seL4 | Microkernel implementation correctness | Halt gate checks submitted evidence |
 | HACMS | Code-injection-resistant flight software | Byzantine/SIFT roles in the **specified** colony |
 | CertiKOS | Layered OS abstraction proofs | Layered enforcement → **planned** human-gate escalation |
 | CompCert | Verified compiler determinism | Deterministic, re-derivable receipt chain (**shipped**) |

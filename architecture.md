@@ -5,7 +5,9 @@
 
 **Shipped in this repository:** fail-closed evidence verification (forged or invalid input exits 1 with no ledger write); runtime policy gate decisions **ALLOW** or **DENY**, each with a SHA-256-chained receipt carrying the reason; replay against an anchored tip and receipt count.
 
-**Specified, not deployed here:** Agent Counsel Colony ([quorum.md](quorum.md)); intercepting, holding, or pausing tool calls; hold/release; human approval or escalation (including rate targets such as 12%); **ESCALATE** as a runtime decision.
+**Specified, not deployed here:** Agent Counsel Colony ([quorum.md](quorum.md)).
+
+**Planned, not implemented:** intercepting, holding, or pausing tool calls; hold/release; human approval or escalation (including escalation-rate targets); **ESCALATE** as a runtime decision.
 
 **In progress:** Lean 4 proofs for gate predicates (this mirror ships partial Lean sources only).
 
@@ -51,8 +53,8 @@
           ▼                          ▼                          ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │              HUMAN GATE — PLANNED (NOT IMPLEMENTED IN THIS REPO)           │
-│  Hold, release, approval tokens, and escalation (e.g. design notes for     │
-│  ~12% escalation in colony specs) are not wired into the public runtime  │
+│  Hold, release, approval tokens, and escalation-rate targets (planned) are │
+│  not wired into the public runtime                                         │
 └────────────────────────────────────┬────────────────────────────────────┘
                                      │
          ┌───────────────────────────┼───────────────────────────┐
@@ -73,10 +75,10 @@
 | Constitutional halt gate + receipt chain | **Shipped** | ALLOW/DENY only; SHA-256 receipts; replay vs anchored tip/count |
 | Tool-call intercept / hold / pause | **Planned** | Not implemented |
 | Agent Counsel Colony (Byzantine + SIFT roles) | **Specified** | [quorum.md](quorum.md); not deployed |
-| Human gate (hold, release, approval, escalation) | **Planned** | Including ESCALATE and rate targets such as 12% in colony design docs |
+| Human gate (hold, release, approval, escalation) | **Planned** | Including ESCALATE and escalation-rate targets (planned) in colony design docs |
 | Lean 4 gate proofs | **In progress** | No published theorem-count or “fully proven” claims |
-| Colony eval metrics (e.g. 88% auto-pass, 150-case harness) | **Not claimed** | No private harness or corpus in this mirror |
+| Colony evaluation metrics | **Planned** | No evaluation results are published from this repository |
 
 ## Design context (not endorsements)
 
-ProofOS receipt chaining is informed by published work on robust AI governance limits (see bibliography in [STANDARDS.md](STANDARDS.md)). That citation does not imply NIST, OpenSSF, or peer-review endorsement of ProofOS, and this repository does not ship certification or consortium-approval claims.
+Related reading is listed in the bibliography in [STANDARDS.md](STANDARDS.md). No endorsement, certification, or peer review of ProofOS by NIST, OpenSSF, or any other body is claimed.
