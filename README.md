@@ -119,4 +119,4 @@ MIT
 
 ---
 
-© 2026 Aevion LLC · Sartell, Minnesota · scott@aevion.ai
+© 2026 Aevion LLC · Sartell, Minnesota · [scott@aevion.ai](mailto:scott@aevion.ai)
