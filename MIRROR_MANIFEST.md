@@ -1,11 +1,12 @@
 # ProofOS Mirror Manifest
 
-ProofOS is the **governed public mirror** of a curated subset of the canonical
-Aevion monorepo: [`Aevion-ai/Aevion-Verifiable-AI`](https://github.com/Aevion-ai/Aevion-Verifiable-AI).
+ProofOS is a **governed public repository**. Only the allow-listed paths in this
+document are published here; secrets, credentials, and internal-only evidence
+are never included.
 
-This manifest defines the only paths that may be copied from the monorepo into
-this repository by the automated mirror workflow. Anything not listed here is
-out of scope for the public mirror.
+This manifest defines the only paths that may be copied from the **upstream
+source** into this repository by the automated mirror workflow. Anything not
+listed here is out of scope for publication.
 
 ## Mirror rules
 
@@ -23,8 +24,8 @@ d credentials, and full git history are never mirrored.
 
 ## Path map
 
-Each line maps a path inside the monorepo (`src`) to a path inside this repo
-(`dst`). Directory paths are copied recursively; missing source paths are
+Each line maps a path inside the upstream source (`src`) to a path inside this
+repo (`dst`). Directory paths are copied recursively; missing source paths are
 skipped.
 
 ```text
