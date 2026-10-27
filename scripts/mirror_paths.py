@@ -1,8 +1,8 @@
-"""Path admission guard for the monorepo mirror workflow.
+"""Path admission guard for the upstream mirror workflow.
 
-The mirror workflow copies an allow-listed subset of the **private** monorepo
-into this **public** repository and then commits and pushes the result. Any
-source path that escapes the allow-list is therefore a private-source
+The mirror workflow copies an allow-listed subset of the **upstream source**
+into this **governed public repository** and then commits and pushes the result.
+Any source path that escapes the allow-list is therefore an upstream-source
 disclosure, not merely a traversal, so admission is decided here and the
 workflow calls into this module rather than inlining an unchecked copy of the rules.
 
@@ -14,7 +14,7 @@ from pathlib import Path, PureWindowsPath
 from typing import Optional, Tuple
 
 # Control-plane directories that may never be written in the mirror checkout
-# or read from the monorepo checkout.
+# or read from the upstream source checkout.
 PROTECTED_CONTROL_PLANE = frozenset({".git", ".github", ".jules", ".monorepo"})
 
 Decision = Tuple[Optional[Path], Optional[str]]
@@ -87,7 +87,7 @@ def _targets_source_checkout(resolved: Path, base_src_dir: Optional[Path]) -> bo
 
 
 def resolve_src(raw: str, base_src_dir: Path) -> Decision:
-    """Admit a manifest source path inside the private monorepo checkout."""
+    """Admit a manifest source path inside the upstream source checkout."""
     base_src_dir = Path(base_src_dir).resolve()
     resolved, reason = _resolve_within(raw, base_src_dir)
     if resolved is None:
@@ -111,7 +111,7 @@ def resolve_dst(raw: str, base_dst_dir: Path, base_src_dir: Optional[Path] = Non
     if resolved is None:
         return None, reason
 
-    # The monorepo checkout lives inside the mirror checkout, so containment
+    # The upstream source checkout lives inside the mirror checkout, so containment
     # alone does not exclude it.
     if _targets_source_checkout(resolved, base_src_dir):
         return None, f"FAIL: DESTINATION_TARGETS_SOURCE_CHECKOUT: {raw}"

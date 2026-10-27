@@ -34,13 +34,13 @@ ProofOS design themes are informed by NIST AI RMF 1.0 (AI 100-1) and the Secure 
 | Practice | ProofOS status in this repo |
 |----------|----------------------------|
 | AM-1: Model Version Control and Provenance | Receipts content-addressed with canonical SHA-256 (**shipped** for gate decisions) |
-| AM-2: Training Data Documentation | AI-BOM generator not vendored in this public mirror |
+| AM-2: Training Data Documentation | AI-BOM generation is planned; not included in this repository. |
 | AM-6: Vulnerability Management | Byzantine/SIFT roles specified in quorum.md; colony **not deployed** here |
 | SC-3: Continuous Monitoring | Receipt chain for each ALLOW/DENY decision (**shipped**) |
 
 ## AI-BOM
 
-AI Bill of Materials generation aligned with SP 800-218A is not shipped in this public mirror. Contact <scott@aevion.ai> for questions about separate tooling.
+AI-BOM generation is planned; not included in this repository. Contact <scott@aevion.ai> for questions about separate tooling.
 
 ## Bibliography (citation only)
 

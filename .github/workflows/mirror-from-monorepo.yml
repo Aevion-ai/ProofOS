@@ -1,4 +1,4 @@
-name: Mirror from Aevion-Verifiable-AI monorepo
+name: Mirror from upstream source
 
 on:
   workflow_dispatch:
@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   mirror:
-    name: Sync governed subset from monorepo
+    name: Sync governed subset from upstream source
     runs-on: ubuntu-latest
     # Prevent accidental runs on forks; this repo only makes sense in the
     # Aevion-ai org.
@@ -31,9 +31,9 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Checkout canonical monorepo
-        # Deploy keys are disabled on the monorepo, so we use a PAT with
-        # contents:read (and metadata:read) scope for Aevion-ai/Aevion-Verifiable-AI.
+      - name: Checkout upstream source
+        # Deploy keys are disabled on the upstream source repository, so we use a PAT with
+        # contents:read (and metadata:read) scope for that repository.
         uses: actions/checkout@v4
         with:
           repository: Aevion-ai/Aevion-Verifiable-AI
