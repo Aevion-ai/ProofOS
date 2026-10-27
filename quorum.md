@@ -1,7 +1,7 @@
 # Agent Counsel Colony — Quorum Constitution v1.0
 
 **Date:** 2026-06-09
-**Status:** Active — governs all counsel colony decisions
+**Status:** Specification — governs the designed counsel colony process; **not deployed** in the public ProofOS runtime mirror (see [README.md](README.md))
 **Binding on:** All 7 agents + Piper Sheriff
 
 ---
@@ -110,6 +110,8 @@ INPUT (PR item)
 
 ### 4.2 Concurrence Thresholds
 
+Verdicts below are defined for the **specified** counsel colony implementation, not for the public ProofOS runtime gate (which ships **ALLOW** and **DENY** only). **HOLD**, **ESCALATE**, and human-gate escalation are **planned** wiring, not behavior in this repository.
+
 | Verdict | Requirement |
 |---------|------------|
 | **APPROVE** | ≥4 of 5 voting agents APPROVE, AND 0 agents DISSENT, AND no SIFT BLOCK |
@@ -178,6 +180,6 @@ The constitution is the formal acknowledgment that Vassilev's theorem applies: n
 
 - **Specification:** This document (`quorum.md`)
 - **Implementation:** `CounselArbiterEnv` in the private Aevion stack (`colony.py`) — not vendored in this public repository
-- **Verification:** internal eval harness (150-problem corpus); results reported as internal, not reproducible from this repo
+- **Verification:** planned internal eval harness; no harness, corpus, or reproducible eval results are vendored in this repository
 - **Version:** 1.0
 - **Receipt:** Every eval run emits a receipt citing this constitution version

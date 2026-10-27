@@ -62,7 +62,7 @@ ProofOS/
 ├── lean/                     # Lean 4 sources (proofs in progress; full corpus: contact for access)
 ├── src/aevion_runtime/       # ModelAccessEnvelope runtime
 ├── schemas/                  # JSON Schema specifications
-├── tests/                    # Python test suite (20/20)
+├── tests/                    # Python test suite (96 tests; see Quick start)
 ├── e2e/                      # Playwright end-to-end tests
 ├── docs/                     # Landing page (aevion.ai)
 ├── architecture.md           # System diagram
@@ -83,7 +83,7 @@ ProofOS/
 | Receipt Chain | SHA-256 content-addressed, canonical JSON; replay against tip and count anchored at run time (does not detect a full rewrite of the ledger and seal) | [architecture.md](architecture.md) |
 | Agent Counsel Colony | Seven-role counsel process specified in quorum.md (Byzantine and SIFT roles); not deployed in this repo | [quorum.md](quorum.md) |
 | Capability Access Separation | Access envelopes PUBLIC → HUMAN\_ONLY; Lean proofs in progress | [CapabilityAccessSeparation.lean](lean/CapabilityAccessSeparation.lean) |
-| ModelAccessEnvelope | Runtime access control for frontier models (20/20 tests) | [model_access_envelope.py](src/aevion_runtime/model_access_envelope.py) |
+| ModelAccessEnvelope | Runtime access control for frontier models | [model_access_envelope.py](src/aevion_runtime/model_access_envelope.py) |
 | Playwright E2E | Browser smoke tests for the aevion.ai dashboard | [smoke.spec.ts](e2e/smoke.spec.ts) |
 | JSON Schemas | Schema specifications for all interface contracts | [schemas/](schemas/) |
 
