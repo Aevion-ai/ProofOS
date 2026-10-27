@@ -19,7 +19,7 @@ mirrored. See the manifest for the current sync status and path map.
 
 ## What it does
 
-ProofOS wraps AI agent decisions in a constitutional halt gate that blocks out-of-policy actions (fail-closed). When an agent proposes an action, the system checks it against declared safety predicates. If the check passes, a SHA-256 receipt is emitted. If it fails, the action is blocked. Every receipt is content-addressed, append-only, and independently verifiable. Lean 4 proofs for the gate predicates are in progress.
+ProofOS wraps AI agent decisions in a constitutional halt gate that blocks out-of-policy actions (fail-closed). When an agent proposes an action, the system checks it against declared safety predicates. If the check passes, a SHA-256 receipt is emitted. If it fails, the action is blocked. Every receipt is SHA-256 content-addressed and can be checked by replaying the chain against the tip anchored at run time. Lean 4 proofs for the gate predicates are in progress.
 
 The design follows a published impossibility result (Vassilev, *IEEE S&P*, 2026) that no finite guardrail set is universally robust, and implements the three architectural responses it motivates: continuous monitoring via receipt chains, proactive red-teaming via a multi-agent counsel colony, and operational resilience via constitutional halt gates and human-in-the-loop escalation.
 
@@ -78,7 +78,7 @@ ProofOS/
 | Component | Description | Link |
 |-----------|-------------|------|
 | Constitutional Halt Gate | Fail-closed gate on declared predicates (Lean proofs in progress) | [LeishmanBerger.lean](lean/LeishmanBerger.lean) |
-| Receipt Chain | SHA-256 content-addressed, canonical JSON, append-only | [architecture.md](architecture.md) |
+| Receipt Chain | SHA-256 content-addressed, canonical JSON; replay against tip anchored at run time | [architecture.md](architecture.md) |
 | Agent Counsel Colony | N-agent review council with Byzantine fault detection and SIFT filtering | [quorum.md](quorum.md) |
 | Capability Access Separation | Access envelopes PUBLIC → HUMAN\_ONLY; Lean proofs in progress | [CapabilityAccessSeparation.lean](lean/CapabilityAccessSeparation.lean) |
 | ModelAccessEnvelope | Runtime access control for frontier models (20/20 tests) | [model_access_envelope.py](src/aevion_runtime/model_access_envelope.py) |
@@ -105,7 +105,7 @@ The architecture is specified in the Quorum Constitution. Implementation and eva
 
 ## Lean proofs (in progress)
 
-Lean 4 modules in [lean/](lean/) (e.g. [CapabilityAccessSeparation.lean](lean/CapabilityAccessSeparation.lean), [LeishmanBerger.lean](lean/LeishmanBerger.lean)) are under active development. This README does not publish theorem counts or proof completion status as product guarantees.
+Lean 4 modules in [lean/](lean/) (e.g. [CapabilityAccessSeparation.lean](lean/CapabilityAccessSeparation.lean), [LeishmanBerger.lean](lean/LeishmanBerger.lean)) are under active development. This README does not publish theorem counts or proof completion status.
 
 The broader Lean 4 corpus is maintained privately in the Aevion-Verifiable-AI repository. Contact <scott@aevion.ai> for access.
 
