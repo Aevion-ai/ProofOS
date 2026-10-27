@@ -62,31 +62,41 @@ class Replay:
         return receipts, seal_index, None
 
     @staticmethod
-    def _check_receipt(
-        receipt: Any, index: int, prev_id: str
-    ) -> ReplayFailure | None:
+    def _check_receipt_mapping(receipt: Any, index: int) -> ReplayFailure | None:
         if not isinstance(receipt, dict):
             return ReplayFailure(index, "receipt must be a mapping")
+        return None
 
+    @staticmethod
+    def _check_receipt_chain(
+        receipt: dict[str, Any], index: int, prev_id: str
+    ) -> ReplayFailure | None:
         if not Receipt.verify_id(receipt):
             return ReplayFailure(index, "receipt_id SHA-256 mismatch")
-
         if receipt.get("prev_receipt_id", "") != prev_id:
             return ReplayFailure(index, "prev_receipt_id chain broken")
+        return None
 
+    @staticmethod
+    def _check_receipt_evidence(
+        receipt: dict[str, Any], index: int
+    ) -> tuple[Any | None, ReplayFailure | None]:
         bundle = receipt.get("evidence_bundle")
         if not isinstance(bundle, dict):
-            return ReplayFailure(index, "missing evidence_bundle")
-
+            return None, ReplayFailure(index, "missing evidence_bundle")
         verdict = EvidenceVerifier.verify(bundle)
         if not verdict.passed:
-            return ReplayFailure(
+            return None, ReplayFailure(
                 index, f"evidence re-verify failed: {verdict.reason}"
             )
-
         if verdict.bundle_digest != receipt.get("bundle_digest"):
-            return ReplayFailure(index, "bundle_digest mismatch")
+            return None, ReplayFailure(index, "bundle_digest mismatch")
+        return verdict, None
 
+    @staticmethod
+    def _check_receipt_policy(
+        receipt: dict[str, Any], index: int, verdict: Any
+    ) -> ReplayFailure | None:
         policy = PolicyGate.evaluate(verdict)
         if policy.decision != receipt.get("decision"):
             return ReplayFailure(index, "decision mismatch")
@@ -94,8 +104,25 @@ class Replay:
             return ReplayFailure(index, "policy_version mismatch")
         if policy.reason != receipt.get("policy_reason"):
             return ReplayFailure(index, "policy_reason mismatch")
-
         return None
+
+    @staticmethod
+    def _check_receipt(
+        receipt: Any, index: int, prev_id: str
+    ) -> ReplayFailure | None:
+        failure = Replay._check_receipt_mapping(receipt, index)
+        if failure is not None:
+            return failure
+
+        failure = Replay._check_receipt_chain(receipt, index, prev_id)
+        if failure is not None:
+            return failure
+
+        verdict, failure = Replay._check_receipt_evidence(receipt, index)
+        if failure is not None:
+            return failure
+
+        return Replay._check_receipt_policy(receipt, index, verdict)
 
     @staticmethod
     def _evaluate(

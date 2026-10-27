@@ -9,7 +9,7 @@ from typing import Any
 from aevion_runtime.evidence import EvidenceVerifier
 from aevion_runtime.ledger import Ledger
 from aevion_runtime.policy import PolicyGate
-from aevion_runtime.receipt import Receipt
+from aevion_runtime.receipt import Receipt, ReceiptBodyFields
 
 
 class AttestationRejected(Exception):
@@ -38,13 +38,15 @@ class Attestation:
                 prev = str(rows[-1].get("receipt_id", ""))
 
         body = Receipt.build_body(
-            prev_receipt_id=prev,
-            evidence_bundle=bundle,
-            bundle_digest=verdict.bundle_digest or "",
-            evidence_verdict="PASS",
-            decision=policy.decision,
-            policy_version=policy.policy_version,
-            policy_reason=policy.reason,
+            ReceiptBodyFields(
+                prev_receipt_id=prev,
+                evidence_bundle=bundle,
+                bundle_digest=verdict.bundle_digest or "",
+                evidence_verdict="PASS",
+                decision=policy.decision,
+                policy_version=policy.policy_version,
+                policy_reason=policy.reason,
+            )
         )
         receipt = Receipt.with_id(body)
         Ledger.append(ledger_path, receipt)

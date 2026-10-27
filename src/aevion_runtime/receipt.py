@@ -2,33 +2,42 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 from aevion_runtime.canonical import CanonicalJson
+
+
+@dataclass(frozen=True)
+class ReceiptBodyFields:
+    """Fields hashed into a receipt_id (excluding receipt_id itself)."""
+
+    prev_receipt_id: str
+    evidence_bundle: dict[str, Any]
+    bundle_digest: str
+    evidence_verdict: str
+    decision: str
+    policy_version: str
+    policy_reason: str
+
+    def to_mapping(self) -> dict[str, Any]:
+        return {
+            "prev_receipt_id": self.prev_receipt_id,
+            "evidence_bundle": self.evidence_bundle,
+            "bundle_digest": self.bundle_digest,
+            "evidence_verdict": self.evidence_verdict,
+            "decision": self.decision,
+            "policy_version": self.policy_version,
+            "policy_reason": self.policy_reason,
+        }
 
 
 class Receipt:
     """SHA-256 receipt_id over canonical JSON body (excluding receipt_id)."""
 
     @staticmethod
-    def build_body(
-        prev_receipt_id: str,
-        evidence_bundle: dict[str, Any],
-        bundle_digest: str,
-        evidence_verdict: str,
-        decision: str,
-        policy_version: str,
-        policy_reason: str,
-    ) -> dict[str, Any]:
-        return {
-            "prev_receipt_id": prev_receipt_id,
-            "evidence_bundle": evidence_bundle,
-            "bundle_digest": bundle_digest,
-            "evidence_verdict": evidence_verdict,
-            "decision": decision,
-            "policy_version": policy_version,
-            "policy_reason": policy_reason,
-        }
+    def build_body(fields: ReceiptBodyFields) -> dict[str, Any]:
+        return fields.to_mapping()
 
     @staticmethod
     def with_id(body: dict[str, Any]) -> dict[str, Any]:
