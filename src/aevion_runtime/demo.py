@@ -136,10 +136,16 @@ class DemoScenarios:
 def main() -> int:
     parser = argparse.ArgumentParser(description="ProofOS Oct 29 evidence demo")
     parser.add_argument("--replay", metavar="LEDGER", help="Replay a JSONL ledger and exit")
+    parser.add_argument(
+        "--ledger",
+        metavar="PATH",
+        help="Write JSONL ledger to PATH (default: temp directory)",
+    )
     args = parser.parse_args()
     if args.replay:
         return Replay.run(Path(args.replay))
-    return DemoScenarios.run_demo()
+    ledger_path = Path(args.ledger) if args.ledger else None
+    return DemoScenarios.run_demo(ledger_path=ledger_path)
 
 
 if __name__ == "__main__":

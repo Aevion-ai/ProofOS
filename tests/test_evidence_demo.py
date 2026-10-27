@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -9,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from aevion_runtime.attestation import Attestation, AttestationRejected
+from aevion_runtime.canonical import CanonicalJson
 from aevion_runtime.demo import DemoScenarios
 from aevion_runtime.evidence import EvidenceVerifier
 from aevion_runtime.ledger import Ledger
@@ -107,6 +109,44 @@ class TestReplay:
         lines[0] = tampered.decode("utf-8")
         ledger_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
         assert Replay.run(ledger_path) == 1
+
+    def test_replay_fails_receipt_id_sha256_on_digest_tamper(
+        self, ledger_path: Path
+    ) -> None:
+        self._two_receipt_ledger(ledger_path)
+        lines = ledger_path.read_text(encoding="utf-8").splitlines()
+        receipt = json.loads(lines[0])
+        digest = receipt["bundle_digest"]
+        last = digest[-1]
+        receipt["bundle_digest"] = digest[:-1] + ("1" if last == "0" else "0")
+        lines[0] = CanonicalJson.dumps(receipt)
+        ledger_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        failure = Replay.check(ledger_path)
+        assert failure is not None
+        assert failure.ledger_index == 0
+        assert failure.reason == "receipt_id SHA-256 mismatch"
+
+    def test_replay_fails_prev_link_after_receipt_id_recompute(
+        self, ledger_path: Path
+    ) -> None:
+        self._two_receipt_ledger(ledger_path)
+        lines = ledger_path.read_text(encoding="utf-8").splitlines()
+        receipt0 = json.loads(lines[0])
+        receipt1 = json.loads(lines[1])
+        original_id = receipt0["receipt_id"]
+        body = {k: v for k, v in receipt0.items() if k != "receipt_id"}
+        body["policy_reason"] = body["policy_reason"] + " (tampered)"
+        receipt0 = Receipt.with_id(body)
+        assert receipt0["receipt_id"] != original_id
+        assert receipt1["prev_receipt_id"] == original_id
+        lines[0] = CanonicalJson.dumps(receipt0)
+        ledger_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        failure = Replay.check(ledger_path)
+        assert failure is not None
+        assert failure.ledger_index == 1
+        assert failure.reason == "prev_receipt_id chain broken"
 
     def test_replay_fails_line_deleted(self, ledger_path: Path) -> None:
         self._two_receipt_ledger(ledger_path)
