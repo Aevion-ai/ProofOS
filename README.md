@@ -119,4 +119,4 @@ Apache 2.0
 
 ---
 
-[Aevion LLC](https://aevion.ai) — SDVOSB
+© 2026 Aevion LLC · Sartell, Minnesota · scott@aevion.ai
