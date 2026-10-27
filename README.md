@@ -24,7 +24,7 @@ ProofOS wraps AI agent decisions in a constitutional halt gate that blocks out-o
 The design follows a published impossibility result (Vassilev, *IEEE S&P*, 2026) that no finite guardrail set is universally robust, and implements the three architectural responses it motivates: continuous monitoring via receipt chains, proactive red-teaming via a multi-agent counsel colony, and operational resilience via constitutional halt gates and human-in-the-loop escalation.
 
 ```
-Agent Action → Fail-closed Halt Gate → Colony Review (7 agents) → Receipt (SHA-256) → Ledger
+Agent Action → Fail-closed Halt Gate → Counsel Colony (7 roles; see quorum.md) → Receipt (SHA-256) → Ledger
 ```
 
 ---
