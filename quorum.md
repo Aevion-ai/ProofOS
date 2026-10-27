@@ -1,8 +1,8 @@
 # Agent Counsel Colony — Quorum Constitution v1.0
 
 **Date:** 2026-06-09
-**Status:** Active — governs all counsel colony decisions
-**Binding on:** All 7 agents + Piper Sheriff
+**Status:** Specification — governs the designed counsel colony process; **not deployed** in the public ProofOS runtime mirror (see [README.md](README.md))
+**Applies to:** the 7 specified agents + Sheriff
 
 ---
 
@@ -10,7 +10,7 @@
 
 The Quorum Constitution defines how individual agent verdicts aggregate into a council decision. Without an explicit constitution, the aggregation rules are implicit, untestable, and vulnerable to Byzantine override of legitimate dissent.
 
-This document is the single source of truth. The `CounselArbiterEnv` implementation in `colony.py` MUST implement these rules exactly. Any deviation is a bug.
+This document is the single source of truth. Any future implementation MUST implement these rules exactly. Any deviation is a bug.
 
 ---
 
@@ -25,7 +25,7 @@ This document is the single source of truth. The `CounselArbiterEnv` implementat
 | **DiFCounsel** | Pure function intent folder | 1 (non-overridable) | Intent label + action mapping | DISSENT = halt or drift intent. Non-overridable by Byzantine alone — requires 3+ agents to override DiF DISSENT |
 | **SIFTCounsel** | Pre-aggregation noise filter | 0 (gate, not vote) | Decorative ratio + filter decision | POSITION: runs BEFORE vote aggregation. GATE: SIFT BLOCK = council never sees input. SIFT PASS = input passes to council. SIFT ABSTAIN = input passes with warning |
 | **CounselArbiter** | Synthesizer | N/A (decides, doesn't vote) | Final verdict + quorum analysis | Synthesizes weighted votes per Constitution §4 |
-| **SheriffAgent** | Cross-architecture witness | 0 (countersigns, doesn't vote) | CONFIRM/FLAG/ABSTAIN attestation | Runs on Pi 5 (ARM64, independent). FLAG = DISPUTED provenance, not a vote override |
+| **SheriffAgent** | Cross-architecture witness | 0 (countersigns, doesn't vote) | CONFIRM/FLAG/ABSTAIN attestation | Specified to run on a Pi 5 (ARM64, independent). FLAG = DISPUTED provenance, not a vote override |
 
 ---
 
@@ -110,6 +110,8 @@ INPUT (PR item)
 
 ### 4.2 Concurrence Thresholds
 
+Verdicts below are defined for the **specified** counsel colony implementation, not for the public ProofOS runtime gate (which ships **ALLOW** and **DENY** only). **HOLD**, **ESCALATE**, and human-gate escalation are **planned** wiring, not behavior in this repository.
+
 | Verdict | Requirement |
 |---------|------------|
 | **APPROVE** | ≥4 of 5 voting agents APPROVE, AND 0 agents DISSENT, AND no SIFT BLOCK |
@@ -168,16 +170,16 @@ Every council decision receipt MUST include:
 
 ---
 
-## 7. Relationship to Vassilev Theorem II.1
+## 7. Amendment
 
-The constitution is the formal acknowledgment that Vassilev's theorem applies: no finite rule set is universally robust. The constitution is therefore **versioned and receipted** — it can be amended by a new council decision that passes a constitutional halt gate check on the amendment itself. The constitution governs its own amendment.
+No finite rule set is assumed to be universally robust. The constitution is therefore **versioned and receipted** — it can be amended by a new council decision that passes a constitutional halt gate check on the amendment itself. The constitution governs its own amendment.
 
 ---
 
 ## 8. Implementation
 
 - **Specification:** This document (`quorum.md`)
-- **Implementation:** `CounselArbiterEnv` in the private Aevion stack (`colony.py`) — not vendored in this public repository
-- **Verification:** internal eval harness (150-problem corpus); results reported as internal, not reproducible from this repo
+- **Implementation:** planned; not included in this repository
+- **Verification:** planned internal eval harness; no harness, corpus, or reproducible eval results are vendored in this repository
 - **Version:** 1.0
-- **Receipt:** Every eval run emits a receipt citing this constitution version
+- **Receipt:** Every eval run will emit a receipt citing this constitution version

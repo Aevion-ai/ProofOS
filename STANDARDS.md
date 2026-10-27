@@ -1,50 +1,49 @@
 # Standards Alignment
 
-## NIST AI Risk Management Framework
+This document describes **design alignment** with public frameworks. It is not a claim of NIST or OpenSSF endorsement, certification, or peer review of ProofOS.
 
-ProofOS aligns with NIST AI RMF 1.0 (AI 100-1) and the Secure Software Development Practices for Generative AI and Dual-Use Foundation Models community profile (SP 800-218A).
+## NIST AI Risk Management Framework (design alignment)
+
+ProofOS design themes are informed by NIST AI RMF 1.0 (AI 100-1) and the Secure Software Development Practices for Generative AI and Dual-Use Foundation Models community profile (SP 800-218A). Alignment is aspirational until independently assessed.
 
 ### Govern
 
-- Constitutional halt gate enforces declared safety predicates before action execution
-- Human gate escalation when automated guardrails disagree
-- Open-obligation surface publishes every unproven proposition as a machine-readable gap list
+- Constitutional halt gate scores submitted evidence against declared safety predicates and returns ALLOW or DENY (**shipped**); intercepting actions before execution is **planned**
+- Human gate escalation when automated guardrails disagree (**planned**; hold, release, and approval not implemented here)
+- Open-obligation surface: Lean modules in progress; obligations are tracked in source rather than hidden behind confidence scores
 
 ### Map
 
-- Receipt chain provides content-addressed audit trail for every system decision
-- SHA-256 canonical serialization enables independent verification of any artifact
-- Agent Counsel Colony performs continuous multi-agent review with Byzantine fault detection
+- Receipt chain provides content-addressed audit trail for each **ALLOW/DENY** decision shipped in the runtime
+- SHA-256 canonical serialization enables independent verification of receipts in the anchored tail
+- Agent Counsel Colony multi-agent review is **specified** in [quorum.md](quorum.md), **not deployed** in this repository
 
 ### Measure
 
-- ProofDB metrics: theorem count, proof density, sorry tracking, receipt chain validation
-- Agent TTS (True-Thinking Score) monitoring across all 7 counsel agents
-- Cross-architecture independent attestation via Pi 5 Sheriff (ARM64, different silicon)
+- Receipt chain validation and replay against anchored tip/count (**shipped**)
+- Agent TTS (True-Thinking Score) and colony eval metrics (e.g. auto-pass rates) are **design targets** for a future deployment, not reported results from this mirror
 
 ### Manage
 
-- Quorum Constitution defines explicit aggregation rules for multi-agent decisions
-- Capability Access Separation enforces tiered deployment (PUBLIC → BUSINESS → TRUSTED_ACCESS → HUMAN_ONLY)
-- Policy-versioned execution with content-addressed receipts
+- Quorum Constitution defines aggregation rules for the **specified** counsel colony process
+- Capability Access Separation defines access tiers (PUBLIC → BUSINESS → TRUSTED_ACCESS → HUMAN_ONLY) in Lean sources (**proofs in progress**)
+- Policy-versioned execution with content-addressed receipts (**shipped** for runtime gate decisions)
 
-## NIST SP 800-218A
+## NIST SP 800-218A (mapping table — implementation status)
 
-| Practice | Aevion Implementation |
-|----------|----------------------|
-| AM-1: Model Version Control and Provenance | ProofDB content-addressed storage with canonical SHA-256 |
-| AM-2: Training Data Documentation | AI-BOM generation with content-addressed model artifacts |
-| AM-6: Vulnerability Management | Byzantine adversarial agent + SIFT filtering as standing capability |
-| SC-3: Continuous Monitoring | Receipt chain — every decision emits an auditable, re-derivable record |
+| Practice | ProofOS status in this repo |
+|----------|----------------------------|
+| AM-1: Model Version Control and Provenance | Receipts content-addressed with canonical SHA-256 (**shipped** for gate decisions) |
+| AM-2: Training Data Documentation | AI-BOM generator not vendored in this public mirror |
+| AM-6: Vulnerability Management | Byzantine/SIFT roles specified in quorum.md; colony **not deployed** here |
+| SC-3: Continuous Monitoring | Receipt chain for each ALLOW/DENY decision (**shipped**) |
 
 ## AI-BOM
 
-ProofOS generates NIST SP 800-218A compliant AI Bills of Materials. Contact <scott@aevion.ai> for access to the generator and sample output.
+AI Bill of Materials generation aligned with SP 800-218A is not shipped in this public mirror. Contact <scott@aevion.ai> for questions about separate tooling.
 
-## Primary citation
+## Bibliography (citation only)
 
 Vassilev, A. "Robust AI Security and Alignment: A Sisyphean Endeavor?" *IEEE Security & Privacy*, May 2026. DOI: `10.1109/MSEC.2026.3678214`.
 
----
-
-NIST AI Consortium applicant — June 2026 review period.
+Citation does not constitute endorsement of ProofOS by the author, IEEE, or NIST.

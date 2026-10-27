@@ -1,22 +1,22 @@
 # ProofOS
 
 [![Lean 4](https://img.shields.io/badge/Lean-4.16.0-7B2D8B)](lean/)
-[![Tests](https://img.shields.io/badge/tests-20%2F20%20PASS-brightgreen)](tests/)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
-[![NIST Consortium](https://img.shields.io/badge/NIST%20AI%20Consortium-applicant-blue)](https://www.nist.gov/aisi)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-**Receipt chain for Lean 4 proof obligations.** Every agent decision generates a cryptographically chained, machine-checkable artifact. This public repository ships 2 Lean 4 modules — 4 proved theorems (0 `sorry`) and 2 open obligations — published as a machine-readable gap list. The methodology, not a headline number, is the deliverable. The broader Aevion formal corpus is maintained privately.
+**Receipt chain for AI agent decisions.** Fail-closed ALLOW/DENY gating with SHA-256-chained receipts; Lean 4 proofs are in progress.
+
+Canonical public documentation: [README.md](README.md).
 
 ---
 
 ## What it does
 
-ProofOS wraps AI agent decisions in a constitutional halt gate backed by Lean 4 proofs. When an agent proposes an action, the system checks it against declared safety predicates. If the check passes, a SHA-256 receipt is emitted. If it fails, the action is blocked. Every receipt is content-addressed, append-only, and independently verifiable.
+ProofOS scores a submitted evidence envelope in a runtime constitutional halt gate and returns **ALLOW** or **DENY** with a SHA-256 receipt that carries the reason. Forged or invalid evidence is rejected with exit code 1 and nothing is written to the ledger. The runtime does not intercept, hold, or pause tool calls (planned). Receipts can be checked by replaying the chain against the tip and count anchored at run time.
 
-The unprovable remainder — in this repository, 2 open obligations in `lean/CapabilityAccessSeparation.lean` — is published as a gap list rather than hidden behind a confidence percentage. No hidden failure surfaces. An auditor reads the gap list.
+The Agent Counsel Colony is **specified** in [quorum.md](quorum.md), **not deployed** in this repository. Human hold, release, approval, and escalation—including escalation-rate targets (planned) in architecture notes—are **planned**, not implemented.
 
 ```
-Agent Action → Halt Gate (Lean 4 predicate) → Colony Review (7 agents) → Receipt (SHA-256) → Ledger
+Agent Action → Fail-closed Halt Gate (ALLOW/DENY) → Receipt (SHA-256) → Ledger
 ```
 
 ---
@@ -25,23 +25,15 @@ Agent Action → Halt Gate (Lean 4 predicate) → Colony Review (7 agents) → R
 
 | Component | Description | Link |
 |-----------|-------------|------|
-| Constitutional Halt Gate | Lean 4 predicates block unsafe state transitions | [LeishmanBerger.lean](lean/LeishmanBerger.lean) |
-| Capability Access Separation | Access-tier ordering, Lean-proved (3 theorems, 0 sorry) | [CapabilityAccessSeparation.lean](lean/CapabilityAccessSeparation.lean) |
-| ModelAccessEnvelope | Runtime access control for frontier models (20/20 tests) | [model_access_envelope.py](src/aevion_runtime/model_access_envelope.py) |
-| Open-Obligation Surface | Named, receipt-stamped obligations (2 open in this repo) | [lean/](lean/) |
+| Constitutional Halt Gate | Runtime ALLOW/DENY on evidence (Lean proofs in progress) | [demo](src/aevion_runtime/demo.py) |
+| Receipt Chain | SHA-256 chained receipts; replay vs anchored tip/count | [architecture.md](architecture.md) |
+| Capability Access Separation | Access-tier ordering in Lean sources (proofs in progress) | [CapabilityAccessSeparation.lean](lean/CapabilityAccessSeparation.lean) |
+| ModelAccessEnvelope | Runtime access control for frontier models | [model_access_envelope.py](src/aevion_runtime/model_access_envelope.py) |
+| Agent Counsel Colony | Seven-role process specified in quorum.md; not deployed here | [quorum.md](quorum.md) |
 
-The receipt-chain implementation, ProofDB store, and the Agent Counsel Colony (`colony.py`) live in the private Aevion stack and are not vendored here; this repository is a public slice.
+## Lean proofs (in progress)
 
-## Proven theorems (in this repo)
-
-| Theorem | Module | Status |
-|---------|--------|--------|
-| `haltSoundness` | `lean/LeishmanBerger.lean` | Proved (0 sorry) |
-| `accessTier_le_trans` | `lean/CapabilityAccessSeparation.lean` | Proved (0 sorry) |
-| `humanOnly_is_top` | `lean/CapabilityAccessSeparation.lean` | Proved (0 sorry) |
-| `public_is_bottom` | `lean/CapabilityAccessSeparation.lean` | Proved (0 sorry) |
-| `envelope_composition_monotonic` | `lean/CapabilityAccessSeparation.lean` | Open (`True` placeholder) |
-| `fallback_preserves_safety` | `lean/CapabilityAccessSeparation.lean` | Open (`sorry`) |
+Lean 4 modules in [lean/](lean/) are under active development. This document does not publish theorem counts or a “fully proven” status for the gate.
 
 ## Design lineage (by analogy)
 
@@ -49,17 +41,17 @@ ProofOS applies a well-established pattern — **verify the boundary, not the un
 
 | System | What it verified | The analogy in ProofOS |
 |--------|------------------|------------------------|
-| seL4 | Microkernel implementation correctness | Halt gate verifies the agent-action interface |
-| HACMS | Code-injection-resistant flight software | Byzantine/SIFT agents as standing red-team |
-| CertiKOS | Layered OS abstraction proofs | Layered enforcement → human-gate escalation |
-| CompCert | Verified compiler determinism | Deterministic, re-derivable receipt chain |
+| seL4 | Microkernel implementation correctness | Halt gate checks submitted evidence |
+| HACMS | Code-injection-resistant flight software | Byzantine/SIFT roles in the **specified** colony |
+| CertiKOS | Layered OS abstraction proofs | Layered enforcement → **planned** human-gate escalation |
+| CompCert | Verified compiler determinism | Deterministic, re-derivable receipt chain (**shipped**) |
 
-ProofOS does **not** claim seL4/HACMS/CertiKOS/CompCert-scale verification; those systems carry full machine-checked implementation proofs. ProofOS verifies declared safety predicates and publishes its open obligations.
+ProofOS does **not** claim seL4/HACMS/CertiKOS/CompCert-scale verification.
 
 ## Paper
 
-A technical paper (*Proof-Native Constitutional Harnesses*) is **in preparation** and not yet submitted. A working draft PDF is under `docs/papers/`.
+Architecture paper: in preparation; not yet submitted.
 
 ---
 
-[Aevion LLC](https://aevion.ai) — SDVOSB — NIST AI Safety Institute Consortium applicant
+[Aevion LLC](https://aevion.ai) — SDVOSB
