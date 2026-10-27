@@ -1,0 +1,35 @@
+\subsection{Threats to validity}
+
+\begin{itemize}
+  \item \textbf{Implementation scope.} The reference implementation is a
+  standalone Python package; it exercises the gate logic, not a full agent
+  harness. Integration with a live long-horizon agent is future work.
+  \item \textbf{Formal statements vs.\ certified systems.} The Lean files
+  state the theorems and prove their structural forms; they do not certify
+  the Python implementation. The two artifacts are related by statement,
+  not by a verified compiler.
+  \item \textbf{Adversarial coverage.} The evaluation battery covers the
+  ten transition fixtures plus resume semantics. It is not a fuzzing
+  campaign, a penetration test, or a formal verification of the gate.
+  \item \textbf{No live middle-layer measurement.} We do not claim
+  middle-layer intelligence verification; no live activation capture was
+  performed for this paper.
+  \item \textbf{No production certification.} Nothing here certifies a
+  product, a regulatory posture, a court-admissibility property, or a
+  hardware root of trust.
+\end{itemize}
+
+\subsection{Claim ceiling}
+
+\begin{center}
+\fbox{\parbox{0.85\textwidth}{\centering
+OPEN RESEARCH ARTIFACT\\
+LOCAL AND CI-REPRODUCIBLE SOFTWARE EVIDENCE\\
+NOT PRODUCT, REGULATORY, OR SAFETY CERTIFICATION}}
+\end{center}
+
+Results apply only to the released configuration
+(\texttt{ProofOS/research/no-witness-no-verdict}, tagged
+\texttt{v0.1.0-research}). The released artifact identifies source commit,
+tree digest, artifact SHA-256, Python and Lean versions, the exact test
+command, the exact test summary, and known limitations.

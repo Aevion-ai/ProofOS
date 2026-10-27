@@ -1,0 +1,54 @@
+The reference implementation is a Python package
+(\texttt{nowitnessnoverdict}) with three modules: the fail-closed gate
+(\texttt{fail\_closed.py}), candidate-only reflection
+(\texttt{candidate\_only.py}), and receipt-bound replay and resume
+(\texttt{receipt.py}). Formal statements are provided as Lean 4 theorems
+(\texttt{lean/NoWitnessNoVerdict/*.lean}) mirroring the six claims.
+
+\subsection{Evaluation battery}
+
+The paper does not claim a large test corpus; it claims a small,
+intelligible adversarial matrix in which every fixture is deterministic
+and reproducible offline.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Fixture} & \textbf{Expected result} \\
+\midrule
+Missing authority lease & REJECT \\
+Inferred evidence used as observed evidence & REJECT \\
+Self-asserted capability & REJECT \\
+Route/action mismatch & REJECT \\
+Receipt body altered after signing & REJECT \\
+Environment digest changed & REJECT \\
+Same-root agent reviews its own work & HOLD or REJECT \\
+EGON candidate requests same-epoch authority & REJECT \\
+Valid authority, evidence, bindings, continuity & ADMIT \\
+Execution fails after valid admission & ADMIT + FAILURE \\
+\bottomrule
+\end{tabular}
+\caption{Adversarial transition fixtures. All pass in the reference
+implementation (14/14 tests including resume-semantics checks).}
+\label{tab:matrix}
+\end{table}
+
+\subsection{Admission disposition vs.\ execution outcome}
+
+The final distinction matters: \texttt{admission\_disposition} records
+whether the transition was authorized; \texttt{execution\_outcome} records
+whether the authorized command actually succeeded. An authorized command
+may fail with exit code 1; the receipt must record
+\texttt{ADMIT} + \texttt{execution\_outcome=FAILURE} and must not turn
+authorization into a claim that execution succeeded.
+
+\subsection{Resume semantics}
+
+Following the machine-checked resume-contract literature
+\cite{resume_contract}, receipts classify each transition as NEW, RETRIED,
+RESUMED, FORKED, REPLAYED, or COMPENSATED, and carry checkpoint identity,
+state digests, execution-prefix digests, prior-effect-set digests, resume
+nonces, consume claims, fork intent, recovery epoch, attempt number, and
+effect idempotency keys. The resume gate enforces consume-once and
+checkpoint validity before a resumed transition may proceed.

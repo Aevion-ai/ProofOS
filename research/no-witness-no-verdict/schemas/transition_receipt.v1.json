@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "aevion.nwnv.transition-receipt.v1",
+  "title": "No Witness No Verdict Transition Receipt",
+  "type": "object",
+  "required": ["receipt_id", "transition_id", "bindings", "origin", "body_hash"],
+  "properties": {
+    "receipt_id": {"type": "string", "minLength": 1},
+    "transition_id": {"type": "string", "minLength": 1},
+    "bindings": {
+      "type": "object",
+      "required": ["execution_graph_digest", "xal_program_digest", "authority_lease", "environment_digest", "input_digest", "effects_digest", "result_digest"],
+      "properties": {
+        "execution_graph_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "xal_program_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "authority_lease": {"type": "string", "minLength": 1},
+        "environment_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "input_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "effects_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "result_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "origin": {"enum": ["NEW", "RETRIED", "RESUMED", "FORKED", "REPLAYED", "COMPENSATED"]},
+    "body_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "signature": {"type": "string"},
+    "admission_disposition": {"enum": ["ADMIT", "REJECT"]},
+    "execution_outcome": {"enum": ["PENDING", "SUCCESS", "FAILURE", "TIMEOUT", "PLATFORM_ERROR"]}
+  },
+  "additionalProperties": false
+}

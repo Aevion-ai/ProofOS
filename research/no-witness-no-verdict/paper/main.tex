@@ -1,0 +1,91 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{xcolor}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\newtheorem{corollary}{Corollary}
+
+\title{\textbf{No Witness, No Verdict: Receipt-Bound Authority and Resume
+Semantics for Self-Modifying Agents}}
+
+\author{Scott Leishman\\
+Aevion LLC\\
+\href{mailto:sleishma@asu.edu}{sleishma@asu.edu}\\
+\href{https://aevion.ai}{https://aevion.ai}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Long-horizon agents increasingly persist state, call tools, modify code, and
+affect external systems, yet most harnesses treat a coherent final response
+as sufficient evidence that an authorized state transition occurred. We
+introduce No Witness, No Verdict, a fail-closed architecture in which every
+consequential transition must discharge typed obligations for identity,
+authority, evidence admissibility, program and environment binding,
+continuity, and side-effect scope. The architecture compiles an explainable
+execution graph through a bounded planning pass into an assembly-like
+execution representation, emits content-bound receipts, and separates
+reflection from promotion: self-evolution may generate candidates but cannot
+grant authority. We formalize reject absorption, candidate-only non-authority,
+same-epoch self-certification exclusion, independent-authority requirements,
+resume semantics (a consumed resume cannot fire twice), and receipt-bound
+replay. A reference implementation is evaluated against adversarial
+transition fixtures covering self-asserted capability, evidence laundering,
+route/action mismatch, receipt tampering, same-root review, checkpoint
+invalidity, and execution failure after valid admission. The released
+artifact includes source, schemas, formal statements, tests, and explicit
+claim ceilings. Results apply only to the released configuration and do not
+constitute product or regulatory certification.
+\end{abstract}
+
+\section{Introduction}
+
+\input{sections/introduction}
+
+\section{Typed State-Transition Obligations}
+
+\input{sections/obligations}
+
+\section{Candidate-Only Self-Evolution}
+
+\input{sections/candidate_only}
+
+\section{Receipt-Bound Replay and Resume Semantics}
+
+\input{sections/receipts}
+
+\section{Independent Authority Roots}
+
+\input{sections/authority_roots}
+
+\section{Reference Implementation and Evaluation}
+
+\input{sections/evaluation}
+
+\section{Related Work}
+
+\input{sections/related_work}
+
+\section{Threats to Validity and Claim Ceiling}
+
+\input{sections/limits}
+
+\section{Conclusion}
+
+\input{sections/conclusion}
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

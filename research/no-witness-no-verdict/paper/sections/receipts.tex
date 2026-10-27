@@ -1,0 +1,58 @@
+A receipt must bind the components of a transition:
+
+\begin{center}
+\begin{tabular}{ll}
+\texttt{execution\_graph\_digest} & the compiled graph the action derived from \\
+\texttt{xal\_program\_digest} & the assembly-like execution program \\
+\texttt{authority\_lease} & the lease that authorized the transition \\
+\texttt{environment\_digest} & the execution environment binding \\
+\texttt{input\_digest} & the transition input \\
+\texttt{effects\_digest} & the declared side effects \\
+\texttt{result\_digest} & the execution result \\
+\end{tabular}
+\end{center}
+
+\begin{theorem}[Receipt divergence invalidates]\label{thm:divergence}
+Digest divergence between a signed receipt and the current bindings
+invalidates replay or promotion.
+\end{theorem}
+
+\begin{proof}
+The receipt body hash is computed over the canonical serialization of all
+seven bindings plus the transition origin. Any divergence between the
+recorded bindings and the current bindings changes the recomputed hash,
+so verification fails before replay or promotion is attempted.
+\end{proof}
+
+\begin{theorem}[Consumed resume cannot fire twice]\label{thm:resume}
+A consumed resume must not fire twice.
+\end{theorem}
+
+\begin{proof}
+Each resume carries a unique nonce and an effect idempotency key. The
+resume gate rejects when the nonce or the effect key already appears in
+the consumed set. The Lean statement
+\texttt{consumed\_resume\_cannot\_fire\_twice} and the executable
+\texttt{resume\_cannot\_repeat\_consumed\_effect} both enforce this.
+\end{proof}
+
+\begin{theorem}[Invalid checkpoint cannot resume]\label{thm:checkpoint}
+A resume referencing a checkpoint whose state digest does not match the
+recorded state is invalid.
+\end{theorem}
+
+Beyond admission disposition, a receipt records the transition origin and
+the execution outcome. A command may be authorized but fail at execution;
+the receipt must record both independently:
+
+\begin{center}
+\begin{tabular}{ll}
+\texttt{admission\_disposition} & ADMIT $\mid$ REJECT \\
+\texttt{execution\_outcome} & SUCCESS $\mid$ FAILURE $\mid$ TIMEOUT $\mid$ PLATFORM\_ERROR \\
+\texttt{origin} & NEW $\mid$ RETRIED $\mid$ RESUMED $\mid$ FORKED $\mid$ REPLAYED $\mid$ COMPENSATED \\
+\end{tabular}
+\end{center}
+
+Authorization is not a claim that execution succeeded. An ADMIT receipt
+with \texttt{execution\_outcome=FAILURE} is the honest record of an
+authorized command that failed.

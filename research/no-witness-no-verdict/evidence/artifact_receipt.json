@@ -1,0 +1,37 @@
+{
+  "schema": "aevion.nwnv.artifact-receipt.v1",
+  "claim_ceiling": "OPEN_RESEARCH_ARTIFACT_LOCAL_AND_CI_REPRODUCIBLE_NOT_CERTIFICATION",
+  "artifact": "ProofOS/research/no-witness-no-verdict",
+  "release_tag": "v0.1.0-research",
+  "recorded_utc": "2026-08-06T18:25:00Z",
+  "source_commit": "7f56c6af823552107772c0c5ca7cd6eafc970d80 (ProofOS, tagged v0.1.0-research)",
+  "python_version": "3.14 (hermes sandbox) / 3.12 (estate)",
+  "lean_version": "Lean 4.16.0 (dependency-free verification, all 3 files CLEAN)",
+  "test_command": "py -3 -B -m pytest tests/ -q",
+  "test_summary": "25 passed in 0.27s (10 matrix + 4 resume + 11 fixtures-driven)",
+  "latex_compile": "pdflatex main.tex -> main.pdf 8 pages, 217493 bytes, no undefined refs",
+  "claim_ceiling_scan": "CLEAN (only the disclaimer's own negation matches prohibited phrases)",
+  "contents": {
+    "paper": ["main.tex", "references.bib", "sections/ (8)", "main.pdf"],
+    "src": ["fail_closed.py", "candidate_only.py", "receipt.py", "__init__.py"],
+    "package": ["nowitnessnoverdict/ (mirrors src)"],
+    "lean": ["NoWitnessNoVerdict.lean", "NoWitnessNoVerdict/RejectAbsorption.lean", "NoWitnessNoVerdict/CandidateOnly.lean", "NoWitnessNoVerdict/ReceiptBoundReplay.lean"],
+    "tests": ["test_evaluation_matrix.py (14)", "test_fixtures_driven.py (11)"],
+    "schemas": ["transition_receipt.v1.json"],
+    "fixtures": ["evaluation_matrix.json (10 fixtures)"],
+    "meta": ["pyproject.toml", "reproduce.sh", "CITATION.cff", "LICENSE", "README.md"]
+  },
+  "known_limitations": [
+    "Lean files state the theorems and prove structural forms; they do not certify the Python implementation",
+    "Evaluation battery is adversarial fixtures, not fuzzing or penetration testing",
+    "No live middle-layer activation capture",
+    "No production/regulatory/safety certification",
+    "Lean lake build must run in WSL (native Windows toolchain degraded)"
+  ],
+  "arxiv": {
+    "account": "Aevion_LLC",
+    "email": "sleishma@asu.edu",
+    "category": "cs.CR (cross-list cs.AI)",
+    "submission_window": "Friday 13:00 Central cutoff for Sunday announcement"
+  }
+}

@@ -1,0 +1,54 @@
+Long-horizon agents persist state, call tools, modify code, and affect
+external systems. Their harnesses increasingly treat a coherent final
+response as sufficient evidence that an authorized state transition
+occurred. This conflation of \emph{plausible output} with \emph{authorized
+transition} is the core defect this paper addresses.
+
+Recent systems make the problem sharper. Prime Agent \cite{prime_agent}
+uses a persistent IPython kernel as its primary tool surface; sub-agents are
+function calls, sessions detach and recover, and the Continual Harness
+treats prompts, agents, skills, and memory as mutable state. Its
+\emph{refine} mechanism edits the harness based on the agent's own
+trajectory. Cloudflare WriteGuard \cite{writeguard} centralizes policy,
+attribution, and audit for MCP writes, classifying tools into risk tiers and
+blocking actions before tool handlers execute; Cloudflare explicitly states
+it does not trust client-side skills or prompts. A machine-checked
+resume-contract study \cite{resume_contract} defines six properties for
+workflow persistence---prefix continuation, effect exactly-once, fork
+determinism, checkpoint validity, consume-once, and recovery
+determinism---and found materially different failure behavior among five
+agent workflow frameworks, including repeated effects after crashes and
+concurrent resume racers firing the same gated effect multiple times.
+
+These systems validate three premises: (i) the harness itself can evolve,
+(ii) centralized write control is necessary, and (iii) persistence semantics
+require formal guarantees. What remains open is the authority question. A
+self-modifying harness may alter candidate memory, skills, prompts, and
+delegation structure; it must not be able to alter the authority conditions
+under which those changes become operational.
+
+We contribute a transition algebra that binds compiled context,
+authenticated principal, independent authority root, effect-bounded
+execution, typed obligations, content-bound receipts, checkpoint/resume
+semantics, and candidate-only reflection into one fail-closed gate.
+
+\paragraph{Contribution summary.}
+\begin{enumerate}
+  \item \textbf{Typed state-transition obligations.} A consequential
+  transition $x_t \xrightarrow{a_t} x_{t+1}$ requires discharge of
+  obligations for identity, authority, evidence, ACP binding, XAL
+  verification, continuity, and effect scope. Missing any mandatory
+  obligation forces HOLD or REJECT, never ADMIT.
+  \item \textbf{Reject absorption.} Once a hard fault exists, downstream
+  components cannot convert the transition into ADMIT, PASS, or PROMOTE.
+  \item \textbf{Candidate-only self-evolution.} Reflection, memory
+  compilers, and self-improvement emit candidates; they cannot produce
+  authority. Same-epoch self-certification is excluded.
+  \item \textbf{Receipt-bound replay and resume semantics.} A receipt binds
+  execution graph, XAL program, authority lease, environment, input,
+  effects, and result; digest divergence invalidates replay. A consumed
+  resume cannot fire twice; an invalid checkpoint cannot resume.
+  \item \textbf{Independent authority roots.} Two identities derived from
+  the same authority, credential, model-session, or campaign root do not
+  constitute an independent reviewer or quorum.
+\end{enumerate}

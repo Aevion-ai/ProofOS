@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "No Witness, No Verdict: Fail-Closed, Receipt-Bound State Transitions for Long-Horizon Agents"
+abstract: >-
+  A fail-closed architecture in which every consequential agent state
+  transition must discharge typed obligations for identity, authority,
+  evidence admissibility, program and environment binding, continuity,
+  and side-effect scope. Separates reflection from promotion: self-evolution
+  may generate candidates but cannot grant authority.
+authors:
+  - family-names: Leishman
+    given-names: Scott
+    orcid: "https://orcid.org/0009-0009-5755-8594"
+    affiliation: "Aevion LLC"
+keywords:
+  - agent safety
+  - fail-closed
+  - receipt-bound transitions
+  - candidate-only self-evolution
+  - resume semantics
+license: Apache-2.0
+version: 0.1.0-research
+date-released: "2026-08-07"
+url: "https://github.com/Aevion-ai/ProofOS/tree/main/research/no-witness-no-verdict"

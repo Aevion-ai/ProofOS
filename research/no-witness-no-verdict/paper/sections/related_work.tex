@@ -1,0 +1,50 @@
+Three recent systems occupy adjacent space, and we do not claim their
+novelties.
+
+\paragraph{Cloudflare WriteGuard \cite{writeguard}.} WriteGuard is a
+centralized policy, attribution, and audit layer for MCP writes. It
+classifies tools into READ\_ONLY, MINIMAL\_IMPACT, CONTAINED\_WRITE, and
+CRITICAL; can block an action before the tool handler executes; labels
+downstream writes with the human and agent/session identity; and emits
+scrubbed audit events. Cloudflare explicitly states that it does not trust
+client-side skills or prompts, and that critical actions such as merging or
+production deployment remain disabled. WriteGuard answers: is this
+identified person's agent permitted to invoke this configured tool?
+No Witness, No Verdict answers the complementary question: does this
+specific state transition possess a valid authority lease, admissible
+evidence, bounded effects, replay integrity, and promotion authority?
+The two are composable: WriteGuard at the tool-invocation boundary, our
+gate at the state-transition boundary.
+
+\paragraph{Prime Agent \cite{prime_agent}.} Prime Agent uses a persistent
+IPython kernel as its primary tool surface. Sub-agents are function calls,
+sessions can detach and recover, and the Continual Harness treats prompts,
+agents, skills, and memory as mutable state. Its \emph{refine} mechanism
+edits the harness from the agent's own trajectory. Prime Intellect
+explicitly states that the worker and kernel processes are not a security
+sandbox. Prime Agent demonstrates that the harness itself can evolve; our
+claim is that the authority conditions under which those changes become
+operational must not be editable by the same mechanism.
+
+\paragraph{Resume contract \cite{resume_contract}.} The machine-checked
+resume-contract paper defines six properties for workflow persistence:
+prefix continuation, effect exactly-once, fork determinism, checkpoint
+validity, consume-once, and recovery determinism. Its fault matrix found
+materially different behavior among five agent workflow frameworks,
+including repeated effects after crashes and concurrent resume racers.
+We adopt these properties as receipt obligations rather than re-deriving
+them.
+
+\paragraph{Context compilation.} Coding agents can externalize long-context
+processing into filesystems and executable tool use rather than relying
+solely on passive attention \cite{long_context_processors}. We use a
+bounded planning pass that compiles an explainable execution graph into an
+assembly-like representation; the compiled artifact is receipt-bound but
+the compilation mechanism itself is not a novelty claim here.
+
+\paragraph{Self-modifying harnesses.} Persistent, self-refining harnesses
+are established territory. Our differentiated claim is the transition
+algebra that binds compiled context, authenticated principal, independent
+authority root, effect-bounded execution, typed obligations, content-bound
+receipts, checkpoint/resume semantics, candidate-only reflection, and
+independent promotion into a single fail-closed gate.

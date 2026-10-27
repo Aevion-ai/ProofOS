@@ -1,0 +1,111 @@
+[
+  {
+    "fixture_id": "NWNV-001",
+    "name": "missing_authority_lease",
+    "expected": "REJECT",
+    "request": {
+      "transition_id": "t1", "action": "deploy",
+      "actor_identity": "alice", "authority_lease": null,
+      "evidence": ["sha256:abc"], "acp_digest": "sha256:acp",
+      "xal_verification": "verified", "continuity_ref": "prev:sha256:000",
+      "effect_scope": "bounded"
+    }
+  },
+  {
+    "fixture_id": "NWNV-002",
+    "name": "inferred_evidence_as_observed",
+    "expected": "REJECT",
+    "request": {
+      "transition_id": "t2", "action": "deploy",
+      "actor_identity": "alice", "authority_lease": "lease-1",
+      "evidence": ["inferred:model-output"], "acp_digest": "sha256:acp",
+      "xal_verification": "verified", "continuity_ref": "prev:sha256:000",
+      "effect_scope": "bounded"
+    }
+  },
+  {
+    "fixture_id": "NWNV-003",
+    "name": "self_asserted_capability",
+    "expected": "REJECT",
+    "grant": {
+      "grant_id": "g2",
+      "authority_root": {"root_id": "candidate-42"},
+      "recipient": "candidate-42", "scope": "exec"
+    },
+    "candidate_id": "candidate-42"
+  },
+  {
+    "fixture_id": "NWNV-004",
+    "name": "route_action_mismatch",
+    "expected": "REJECT",
+    "gate_action": "sandbox.exec",
+    "route_action": "sandbox.destroy"
+  },
+  {
+    "fixture_id": "NWNV-005",
+    "name": "receipt_body_altered_after_signing",
+    "expected": "REJECT",
+    "bindings": {
+      "execution_graph_digest": "sha256:eg",
+      "xal_program_digest": "sha256:xal",
+      "authority_lease": "lease-1",
+      "environment_digest": "sha256:env",
+      "input_digest": "sha256:in",
+      "effects_digest": "sha256:fx",
+      "result_digest": "sha256:res"
+    },
+    "tamper": {"execution_graph_digest": "sha256:EVIL"}
+  },
+  {
+    "fixture_id": "NWNV-006",
+    "name": "environment_digest_changed",
+    "expected": "REJECT",
+    "bindings": {
+      "execution_graph_digest": "sha256:eg",
+      "xal_program_digest": "sha256:xal",
+      "authority_lease": "lease-1",
+      "environment_digest": "sha256:env",
+      "input_digest": "sha256:in",
+      "effects_digest": "sha256:fx",
+      "result_digest": "sha256:res"
+    },
+    "tamper": {"environment_digest": "sha256:DIFFERENT"}
+  },
+  {
+    "fixture_id": "NWNV-007",
+    "name": "same_root_review",
+    "expected": "HOLD_OR_REJECT",
+    "roots": {"a": "root-1", "b": "root-1"}
+  },
+  {
+    "fixture_id": "NWNV-008",
+    "name": "same_epoch_authority",
+    "expected": "REJECT",
+    "epoch": {"execution_epoch": 1, "reflection_epoch": 1, "authority_eligibility_epoch": 1}
+  },
+  {
+    "fixture_id": "NWNV-009",
+    "name": "valid_transition",
+    "expected": "ADMIT",
+    "request": {
+      "transition_id": "t9", "action": "deploy",
+      "actor_identity": "alice", "authority_lease": "lease-1",
+      "evidence": ["sha256:abc"], "acp_digest": "sha256:acp",
+      "xal_verification": "verified", "continuity_ref": "prev:sha256:000",
+      "effect_scope": "bounded"
+    }
+  },
+  {
+    "fixture_id": "NWNV-010",
+    "name": "execution_fails_after_valid_admission",
+    "expected": "ADMIT_PLUS_FAILURE",
+    "request": {
+      "transition_id": "t10", "action": "deploy",
+      "actor_identity": "alice", "authority_lease": "lease-1",
+      "evidence": ["sha256:abc"], "acp_digest": "sha256:acp",
+      "xal_verification": "verified", "continuity_ref": "prev:sha256:000",
+      "effect_scope": "bounded"
+    },
+    "execution_outcome": "FAILURE"
+  }
+]
