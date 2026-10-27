@@ -103,8 +103,19 @@ class DemoScenarios:
         print(f"POLICY: {receipt_deny['decision']} policy_version={receipt_deny['policy_version']}")
         print(f"RECEIPT: {receipt_deny['receipt_id']}")
 
-        Ledger.seal(ledger, receipt_count=2, tip_receipt_id=receipt_deny["receipt_id"])
-        print(f"LEDGER_SEAL: receipt_count=2 tip={receipt_deny['receipt_id']}")
+        tip_id = receipt_deny["receipt_id"]
+        receipt_count = 2
+        Ledger.seal(ledger, receipt_count=receipt_count, tip_receipt_id=tip_id)
+        print(f"LEDGER_SEAL: receipt_count={receipt_count} tip={tip_id}")
+        ledger_resolved = ledger.resolve()
+        print(f"TIP: {tip_id}")
+        print(f"RECEIPT_COUNT: {receipt_count}")
+        print(f"LEDGER_PATH: {ledger_resolved}")
+        replay_cmd = (
+            f"PYTHONPATH=src python3 -m aevion_runtime.demo "
+            f"--replay {ledger_resolved} --expect-tip {tip_id} --expect-count {receipt_count}"
+        )
+        print(f"REPLAY_CMD: {replay_cmd}")
 
         print("=== STEP 3: FORGED EVIDENCE (expect REJECT exit=1, ledger unchanged) ===")
         before = Ledger.line_count(ledger)
@@ -122,7 +133,7 @@ class DemoScenarios:
         print(f"LEDGER_LINES: {before} (receipts + seal, unchanged after forged attempts)")
 
         print("=== STEP 4: REPLAY (expect MATCH for each receipt) ===")
-        code = Replay.run(ledger)
+        code = Replay.run(ledger, expect_tip=tip_id, expect_count=receipt_count)
         if code != 0:
             return code
 
@@ -141,9 +152,24 @@ def main() -> int:
         metavar="PATH",
         help="Write JSONL ledger to PATH (default: temp directory)",
     )
+    parser.add_argument(
+        "--expect-tip",
+        metavar="RECEIPT_ID",
+        help="Expected tip receipt_id recorded at attest time (required for --replay)",
+    )
+    parser.add_argument(
+        "--expect-count",
+        type=int,
+        metavar="N",
+        help="Expected receipt line count recorded at attest time (required for --replay)",
+    )
     args = parser.parse_args()
     if args.replay:
-        return Replay.run(Path(args.replay))
+        return Replay.run(
+            Path(args.replay),
+            expect_tip=args.expect_tip,
+            expect_count=args.expect_count,
+        )
     ledger_path = Path(args.ledger) if args.ledger else None
     return DemoScenarios.run_demo(ledger_path=ledger_path)
 
