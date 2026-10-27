@@ -40,9 +40,16 @@ pytest tests/ -q
 
 Expected output:
 ```
-tests/test_model_access_envelope.py .................... [100%]
-20 passed in 0.71s
+96 passed in ~0.5s
 ```
+
+Oct 29 evidence demo (authentic → forged → replay):
+
+```bash
+pip install -r requirements.txt && PYTHONPATH=src python3 -m aevion_runtime.demo
+```
+
+Replay checks the ledger against the tip receipt id and receipt count recorded at run time, so it detects edits, deletions, reordering, and truncation in the anchored tail. It does not detect someone who rewrites the whole ledger and seal unless the tip is anchored externally.
 
 ---
 
