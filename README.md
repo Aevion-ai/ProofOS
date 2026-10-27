@@ -40,7 +40,7 @@ pytest tests/ -q
 
 Expected output:
 ```
-86 passed in ~0.5s
+88 passed in ~0.5s
 ```
 
 Oct 29 evidence demo (authentic → forged → replay):
