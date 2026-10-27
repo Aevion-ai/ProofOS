@@ -83,40 +83,48 @@ class DemoScenarios:
         return cases
 
     @staticmethod
-    def run_demo(ledger_path: Path | None = None) -> int:
-        out_dir = tempfile.mkdtemp(prefix="proofos-demo-")
-        ledger = ledger_path or Path(out_dir) / "ledger.jsonl"
-
+    def _step1_authentic_allow(ledger: Path) -> dict[str, Any]:
         print("=== STEP 1: AUTHENTIC EVIDENCE (expect PASS + policy ALLOW + receipt) ===")
         allow = DemoScenarios.allow_bundle()
         verdict = EvidenceVerifier.verify(allow)
         print(f"EVIDENCE: {verdict.reason}")
         receipt_allow = Attestation.run(allow, ledger)
-        print(f"POLICY: {receipt_allow['decision']} policy_version={receipt_allow['policy_version']}")
+        policy_version = receipt_allow["policy_version"]
+        print(f"POLICY: {receipt_allow['decision']} policy_version={policy_version}")
         print(f"RECEIPT: {receipt_allow['receipt_id']}")
+        return allow
 
+    @staticmethod
+    def _step2_policy_deny(ledger: Path) -> tuple[str, int]:
         print("=== STEP 2: VERIFIED EVIDENCE POLICY DENY (expect PASS + DENY + receipt) ===")
         deny = DemoScenarios.deny_bundle()
         verdict_deny = EvidenceVerifier.verify(deny)
         print(f"EVIDENCE: {verdict_deny.reason}")
         receipt_deny = Attestation.run(deny, ledger)
-        print(f"POLICY: {receipt_deny['decision']} policy_version={receipt_deny['policy_version']}")
+        policy_version = receipt_deny["policy_version"]
+        print(f"POLICY: {receipt_deny['decision']} policy_version={policy_version}")
         print(f"RECEIPT: {receipt_deny['receipt_id']}")
-
         tip_id = receipt_deny["receipt_id"]
         receipt_count = 2
         Ledger.seal(ledger, receipt_count=receipt_count, tip_receipt_id=tip_id)
         print(f"LEDGER_SEAL: receipt_count={receipt_count} tip={tip_id}")
+        return tip_id, receipt_count
+
+    @staticmethod
+    def _print_replay_anchor(ledger: Path, tip_id: str, receipt_count: int) -> None:
         ledger_resolved = ledger.resolve()
         print(f"TIP: {tip_id}")
         print(f"RECEIPT_COUNT: {receipt_count}")
         print(f"LEDGER_PATH: {ledger_resolved}")
         replay_cmd = (
             f"PYTHONPATH=src python3 -m aevion_runtime.demo "
-            f"--replay {ledger_resolved} --expect-tip {tip_id} --expect-count {receipt_count}"
+            f"--replay {ledger_resolved} --expect-tip {tip_id} "
+            f"--expect-count {receipt_count}"
         )
         print(f"REPLAY_CMD: {replay_cmd}")
 
+    @staticmethod
+    def _step3_forged_evidence(allow: dict[str, Any], ledger: Path) -> int:
         print("=== STEP 3: FORGED EVIDENCE (expect REJECT exit=1, ledger unchanged) ===")
         before = Ledger.line_count(ledger)
         for label, bundle in DemoScenarios.forged_cases(allow):
@@ -131,9 +139,27 @@ class DemoScenarios:
                     return 1
                 print(f"FORGED [{label}]: REJECT exit=1 reason={exc.reason}")
         print(f"LEDGER_LINES: {before} (receipts + seal, unchanged after forged attempts)")
+        return 0
 
+    @staticmethod
+    def _step4_replay(ledger: Path, tip_id: str, receipt_count: int) -> int:
         print("=== STEP 4: REPLAY (expect MATCH for each receipt) ===")
-        code = Replay.run(ledger, expect_tip=tip_id, expect_count=receipt_count)
+        return Replay.run(ledger, expect_tip=tip_id, expect_count=receipt_count)
+
+    @staticmethod
+    def run_demo(ledger_path: Path | None = None) -> int:
+        out_dir = tempfile.mkdtemp(prefix="proofos-demo-")
+        ledger = ledger_path or Path(out_dir) / "ledger.jsonl"
+
+        allow = DemoScenarios._step1_authentic_allow(ledger)
+        tip_id, receipt_count = DemoScenarios._step2_policy_deny(ledger)
+        DemoScenarios._print_replay_anchor(ledger, tip_id, receipt_count)
+
+        code = DemoScenarios._step3_forged_evidence(allow, ledger)
+        if code != 0:
+            return code
+
+        code = DemoScenarios._step4_replay(ledger, tip_id, receipt_count)
         if code != 0:
             return code
 

@@ -88,18 +88,20 @@ class EvidenceVerifier:
         return None
 
     @staticmethod
-    def _parse_envelope(envelope_raw: Any) -> tuple[ModelAccessEnvelope | None, EvidenceVerdict | None]:
-        if not isinstance(envelope_raw, dict):
-            return None, EvidenceVerdict(False, "envelope must be a mapping")
+    def _validate_envelope_schema(envelope_raw: dict[str, Any]) -> EvidenceVerdict | None:
         try:
             jsonschema.validate(
                 instance=envelope_raw, schema=EvidenceVerifier._load_schema()
             )
         except jsonschema.ValidationError as exc:
-            return None, EvidenceVerdict(
+            return EvidenceVerdict(
                 False, f"envelope schema validation failed: {exc.message}"
             )
-        envelope = ModelAccessEnvelope(
+        return None
+
+    @staticmethod
+    def _envelope_from_mapping(envelope_raw: dict[str, Any]) -> ModelAccessEnvelope:
+        return ModelAccessEnvelope(
             model_id=envelope_raw["model_id"],
             capability_class=CapabilityClass(envelope_raw["capability_class"]),
             access_tier=AccessTier(envelope_raw["access_tier"]),
@@ -110,6 +112,20 @@ class EvidenceVerifier:
             human_gate_required=bool(envelope_raw["human_gate_required"]),
             policy_version=str(envelope_raw["policy_version"]),
         )
+
+    @staticmethod
+    def _parse_envelope(
+        envelope_raw: Any,
+    ) -> tuple[ModelAccessEnvelope | None, EvidenceVerdict | None]:
+        if not isinstance(envelope_raw, dict):
+            return None, EvidenceVerdict(False, "envelope must be a mapping")
+        failure = EvidenceVerifier._validate_envelope_schema(envelope_raw)
+        if failure is not None:
+            return None, failure
+        try:
+            envelope = EvidenceVerifier._envelope_from_mapping(envelope_raw)
+        except (KeyError, TypeError, ValueError) as exc:
+            return None, EvidenceVerdict(False, str(exc))
         return envelope, None
 
     @staticmethod
@@ -152,12 +168,30 @@ class EvidenceVerifier:
         return None
 
     @staticmethod
-    def verify(bundle: dict[str, Any]) -> EvidenceVerdict:
-        """Fail-closed: any ambiguity or error yields passed=False."""
-        failure = EvidenceVerifier._check_required_fields(bundle)
-        if failure is not None:
-            return failure
+    def _pass_verdict(
+        bundle: dict[str, Any],
+        envelope: ModelAccessEnvelope,
+        artifact_bytes: bytes,
+        requested: AccessTier,
+        n: int,
+        f: int,
+    ) -> EvidenceVerdict:
+        digest = EvidenceVerifier.bundle_digest(bundle)
+        return EvidenceVerdict(
+            True,
+            "PASS",
+            envelope=envelope,
+            artifact_bytes=artifact_bytes,
+            requested_tier=requested,
+            consensus_n=n,
+            consensus_f=f,
+            bundle_digest=digest,
+        )
 
+    @staticmethod
+    def _verify_bundle_fields(
+        bundle: dict[str, Any],
+    ) -> tuple[ModelAccessEnvelope, bytes, AccessTier, int, int] | EvidenceVerdict:
         envelope, failure = EvidenceVerifier._parse_envelope(bundle["envelope"])
         if failure is not None:
             return failure
@@ -184,14 +218,20 @@ class EvidenceVerifier:
         if failure is not None:
             return failure
 
-        digest = EvidenceVerifier.bundle_digest(bundle)
-        return EvidenceVerdict(
-            True,
-            "PASS",
-            envelope=envelope,
-            artifact_bytes=artifact_bytes,
-            requested_tier=requested,
-            consensus_n=n,
-            consensus_f=f,
-            bundle_digest=digest,
+        return envelope, artifact_bytes, requested, n, f
+
+    @staticmethod
+    def verify(bundle: dict[str, Any]) -> EvidenceVerdict:
+        """Fail-closed: any ambiguity or error yields passed=False."""
+        failure = EvidenceVerifier._check_required_fields(bundle)
+        if failure is not None:
+            return failure
+
+        verified = EvidenceVerifier._verify_bundle_fields(bundle)
+        if isinstance(verified, EvidenceVerdict):
+            return verified
+
+        envelope, artifact_bytes, requested, n, f = verified
+        return EvidenceVerifier._pass_verdict(
+            bundle, envelope, artifact_bytes, requested, n, f
         )

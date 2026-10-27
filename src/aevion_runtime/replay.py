@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -33,6 +34,35 @@ class Replay:
     """Re-verify receipts from a JSONL ledger file alone."""
 
     @staticmethod
+    def _missing_seal_failure(rows: list[dict[str, Any]]) -> ReplayFailure:
+        return ReplayFailure(len(rows) - 1, "missing SEAL terminal record")
+
+    @staticmethod
+    def _validate_seal_counts(
+        receipts: list[dict[str, Any]], seal: dict[str, Any], seal_index: int
+    ) -> ReplayFailure | None:
+        expected = seal.get("receipt_count")
+        if not isinstance(expected, int):
+            return ReplayFailure(seal_index, "invalid seal")
+        if len(receipts) != expected:
+            return ReplayFailure(
+                seal_index,
+                f"seal receipt_count {expected} != {len(receipts)} receipt lines",
+            )
+        return None
+
+    @staticmethod
+    def _validate_seal_tip(
+        receipts: list[dict[str, Any]], seal: dict[str, Any], seal_index: int
+    ) -> ReplayFailure | None:
+        tip = seal.get("tip_receipt_id")
+        if not isinstance(tip, str) or not receipts:
+            return ReplayFailure(seal_index, "tip_receipt_id mismatch")
+        if receipts[-1].get("receipt_id") != tip:
+            return ReplayFailure(seal_index, "tip_receipt_id mismatch")
+        return None
+
+    @staticmethod
     def _parse_rows(
         rows: list[dict[str, Any]],
     ) -> tuple[list[dict[str, Any]], int, ReplayFailure | None]:
@@ -41,24 +71,17 @@ class Replay:
             return [], 0, ReplayFailure(0, "empty ledger")
 
         if rows[-1].get("record_type") != "SEAL":
-            return [], len(rows) - 1, ReplayFailure(
-                len(rows) - 1, "missing SEAL terminal record"
-            )
+            return [], len(rows) - 1, Replay._missing_seal_failure(rows)
 
         seal = rows[-1]
         receipts = rows[:-1]
         seal_index = len(rows) - 1
-        expected = seal.get("receipt_count")
-        if not isinstance(expected, int):
-            return [], seal_index, ReplayFailure(seal_index, "invalid seal")
-        if len(receipts) != expected:
-            return [], seal_index, ReplayFailure(
-                seal_index,
-                f"seal receipt_count {expected} != {len(receipts)} receipt lines",
-            )
-        tip = seal.get("tip_receipt_id")
-        if not isinstance(tip, str) or not receipts or receipts[-1].get("receipt_id") != tip:
-            return [], seal_index, ReplayFailure(seal_index, "tip_receipt_id mismatch")
+        failure = Replay._validate_seal_counts(receipts, seal, seal_index)
+        if failure is not None:
+            return [], seal_index, failure
+        failure = Replay._validate_seal_tip(receipts, seal, seal_index)
+        if failure is not None:
+            return [], seal_index, failure
         return receipts, seal_index, None
 
     @staticmethod
@@ -125,6 +148,39 @@ class Replay:
         return Replay._check_receipt_policy(receipt, index, verdict)
 
     @staticmethod
+    def _verify_receipt_chain(
+        receipts: list[dict[str, Any]],
+    ) -> ReplayFailure | None:
+        prev_id = ""
+        for index, receipt in enumerate(receipts):
+            failure = Replay._check_receipt(receipt, index, prev_id)
+            if failure is not None:
+                return failure
+            prev_id = receipt["receipt_id"]
+        return None
+
+    @staticmethod
+    def _check_anchor_expectations(
+        receipts: list[dict[str, Any]],
+        seal_index: int,
+        expect_tip: str,
+        expect_count: int,
+    ) -> ReplayFailure | None:
+        actual_count = len(receipts)
+        if actual_count != expect_count:
+            return ReplayFailure(
+                seal_index,
+                f"expect-count mismatch: expected {expect_count} got {actual_count}",
+            )
+        actual_tip = receipts[-1]["receipt_id"] if receipts else ""
+        if actual_tip != expect_tip:
+            return ReplayFailure(
+                seal_index,
+                f"expect-tip mismatch: expected {expect_tip} got {actual_tip}",
+            )
+        return None
+
+    @staticmethod
     def _evaluate(
         ledger_path: Path,
         expect_tip: str | None = None,
@@ -142,28 +198,13 @@ class Replay:
         if parse_failure is not None:
             return parse_failure
 
-        prev_id = ""
-        for index, receipt in enumerate(receipts):
-            failure = Replay._check_receipt(receipt, index, prev_id)
-            if failure is not None:
-                return failure
-            prev_id = receipt["receipt_id"]
+        chain_failure = Replay._verify_receipt_chain(receipts)
+        if chain_failure is not None:
+            return chain_failure
 
-        actual_count = len(receipts)
-        if actual_count != expect_count:
-            return ReplayFailure(
-                seal_index,
-                f"expect-count mismatch: expected {expect_count} got {actual_count}",
-            )
-
-        actual_tip = receipts[-1]["receipt_id"] if receipts else ""
-        if actual_tip != expect_tip:
-            return ReplayFailure(
-                seal_index,
-                f"expect-tip mismatch: expected {expect_tip} got {actual_tip}",
-            )
-
-        return None
+        return Replay._check_anchor_expectations(
+            receipts, seal_index, expect_tip, expect_count
+        )
 
     @staticmethod
     def check(
@@ -194,33 +235,20 @@ class Replay:
 
     @staticmethod
     def main(argv: list[str] | None = None) -> int:
-        args = argv if argv is not None else sys.argv[1:]
-        if not args or args[0] in ("-h", "--help"):
+        parser = argparse.ArgumentParser(add_help=False)
+        parser.add_argument("ledger")
+        parser.add_argument("--expect-tip")
+        parser.add_argument("--expect-count", type=int)
+        parser.add_argument("-h", "--help", action="store_true")
+        args, unknown = parser.parse_known_args(argv if argv is not None else sys.argv[1:])
+        if args.help or unknown:
             print(
                 "usage: replay <ledger.jsonl> --expect-tip <id> --expect-count <n>",
                 file=sys.stderr,
             )
             return 2
-        ledger_arg = args[0]
-        expect_tip: str | None = None
-        expect_count: int | None = None
-        rest = args[1:]
-        index = 0
-        while index < len(rest):
-            if rest[index] == "--expect-tip":
-                if index + 1 >= len(rest):
-                    print("--expect-tip requires a receipt_id", file=sys.stderr)
-                    return 2
-                expect_tip = rest[index + 1]
-                index += 2
-                continue
-            if rest[index] == "--expect-count":
-                if index + 1 >= len(rest):
-                    print("--expect-count requires an integer", file=sys.stderr)
-                    return 2
-                expect_count = int(rest[index + 1])
-                index += 2
-                continue
-            print(f"unknown argument: {rest[index]}", file=sys.stderr)
-            return 2
-        return Replay.run(Path(ledger_arg), expect_tip, expect_count)
+        return Replay.run(
+            Path(args.ledger),
+            expect_tip=args.expect_tip,
+            expect_count=args.expect_count,
+        )
