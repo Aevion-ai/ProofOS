@@ -49,6 +49,17 @@ class EvidenceVerdict:
     bundle_digest: str | None = None
 
 
+@dataclass(frozen=True)
+class VerifiedBundleFields:
+    """Parsed bundle fields after cryptographic and schema checks."""
+
+    envelope: ModelAccessEnvelope
+    artifact_bytes: bytes
+    requested_tier: AccessTier
+    consensus_n: int
+    consensus_f: int
+
+
 class EvidenceVerifier:
     """Verify envelope + artifact evidence bundles."""
 
@@ -169,29 +180,24 @@ class EvidenceVerifier:
 
     @staticmethod
     def _pass_verdict(
-        bundle: dict[str, Any],
-        envelope: ModelAccessEnvelope,
-        artifact_bytes: bytes,
-        requested: AccessTier,
-        n: int,
-        f: int,
+        bundle: dict[str, Any], fields: VerifiedBundleFields
     ) -> EvidenceVerdict:
         digest = EvidenceVerifier.bundle_digest(bundle)
         return EvidenceVerdict(
             True,
             "PASS",
-            envelope=envelope,
-            artifact_bytes=artifact_bytes,
-            requested_tier=requested,
-            consensus_n=n,
-            consensus_f=f,
+            envelope=fields.envelope,
+            artifact_bytes=fields.artifact_bytes,
+            requested_tier=fields.requested_tier,
+            consensus_n=fields.consensus_n,
+            consensus_f=fields.consensus_f,
             bundle_digest=digest,
         )
 
     @staticmethod
     def _verify_bundle_fields(
         bundle: dict[str, Any],
-    ) -> tuple[ModelAccessEnvelope, bytes, AccessTier, int, int] | EvidenceVerdict:
+    ) -> VerifiedBundleFields | EvidenceVerdict:
         envelope, failure = EvidenceVerifier._parse_envelope(bundle["envelope"])
         if failure is not None:
             return failure
@@ -218,7 +224,13 @@ class EvidenceVerifier:
         if failure is not None:
             return failure
 
-        return envelope, artifact_bytes, requested, n, f
+        return VerifiedBundleFields(
+            envelope=envelope,
+            artifact_bytes=artifact_bytes,
+            requested_tier=requested,
+            consensus_n=n,
+            consensus_f=f,
+        )
 
     @staticmethod
     def verify(bundle: dict[str, Any]) -> EvidenceVerdict:
@@ -231,7 +243,4 @@ class EvidenceVerifier:
         if isinstance(verified, EvidenceVerdict):
             return verified
 
-        envelope, artifact_bytes, requested, n, f = verified
-        return EvidenceVerifier._pass_verdict(
-            bundle, envelope, artifact_bytes, requested, n, f
-        )
+        return EvidenceVerifier._pass_verdict(bundle, verified)
