@@ -27,7 +27,7 @@ jobs:
       - name: Oct 29 demo proof artifacts
         run: |
           PYTHONPATH=src python3 -m aevion_runtime.demo --ledger demo-ledger.jsonl > demo-transcript.txt
-      - uses: actions/upload-artifact@26f96dfa694d2e90014e002af2d965315b5b0b48 # v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: oct29-demo-proof
           path: |
