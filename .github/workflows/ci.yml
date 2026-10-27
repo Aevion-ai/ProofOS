@@ -54,7 +54,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
-      - uses: dorny/paths-filter@4512585fd31b26b61437eb10cc9041271fac37b9 # v3.0.2
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: lean_paths
         if: github.event_name != 'push' || github.ref != 'refs/heads/main'
         with:
