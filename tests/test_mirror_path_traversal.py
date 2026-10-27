@@ -25,9 +25,10 @@ Asserts:
 
 import os
 from pathlib import Path
+
 import pytest
 
-from scripts.mirror_paths import resolve_dst, resolve_src, is_absolute_request
+from scripts.mirror_paths import is_absolute_request, resolve_dst, resolve_src
 
 
 @pytest.fixture
