@@ -11,10 +11,7 @@
 
 ## Public mirror
 
-ProofOS is a **governed public mirror** synchronized from
-[Aevion-ai/Aevion-Verifiable-AI](https://github.com/Aevion-ai/Aevion-Verifiable-AI).
-Only the allow-listed paths in [MIRROR_MANIFEST.md](MIRROR_MANIFEST.md) are published
-here; secrets, credentials, and internal-only evidence are never mirrored. See the manifest for the current sync status and path map.
+ProofOS is a **governed public repository**. Only the allow-listed paths in [MIRROR_MANIFEST.md](MIRROR_MANIFEST.md) are published here; secrets, credentials, and internal-only evidence are never included. See the manifest for the current sync status and path map.
 
 ## What it does
 
