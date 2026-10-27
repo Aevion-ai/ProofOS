@@ -40,8 +40,13 @@ pytest tests/ -q
 
 Expected output:
 ```
-tests/test_model_access_envelope.py .................... [100%]
-20 passed in 0.71s
+85 passed in ~0.5s
+```
+
+Oct 29 evidence demo (authentic → forged → replay):
+
+```bash
+pip install -r requirements.txt && PYTHONPATH=. python3 -m aevion_runtime.demo
 ```
 
 ---
