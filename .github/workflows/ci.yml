@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref_name }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   python-tests:
@@ -52,6 +52,33 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@4512585fd31b26b61437eb10cc9041271fac37b9 # v3.0.2
+        id: lean_paths
+        if: github.event_name != 'push' || github.ref != 'refs/heads/main'
+        with:
+          filters: |
+            lean:
+              - '**/*.lean'
+              - 'lakefile*'
+              - 'lean-toolchain'
+              - 'lake-manifest.json'
+              - '.github/workflows/ci.yml'
+      - name: Decide whether to run Lean build
+        id: run_lean
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ steps.lean_paths.outputs.lean }}" == "true" ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Skip Lean build (no Lean-related changes)
+        if: steps.run_lean.outputs.run != 'true'
+        run: echo "Skipping expensive Lean build — no Lean-related files changed."
       - uses: leanprover/lean-action@38fbc41a8c28c4cbaec22d7f7de508ec2e7c0dd9 # v1
+        if: steps.run_lean.outputs.run == 'true'
         with:
           use-mathlib-cache: true
