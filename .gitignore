@@ -6,3 +6,6 @@ node_modules/
 lake-packages/
 e2e/screenshots/
 test-results/
+
+# Mirrored monorepo checkout (workflow-managed; see mirror-from-monorepo.yml)
+.monorepo/
